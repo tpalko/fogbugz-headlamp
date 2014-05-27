@@ -1,0 +1,31 @@
+<h1>{{description}}</h1>
+<h2>"{{filter}}": ${{total_cost|round(2, 'floor')}}</h2>
+
+<table>
+	<tr>
+		<th>ixFixFor</th>
+		<th>sFixFor</th>
+		<th>ixProject</th>
+		<th>sProject</th>
+		<th>dt</th>
+		<th>dtStart</th>
+		<th>cases</th>
+		<th>person hours</th>
+		<th>cost</th>
+	</tr>
+
+{% for f in fixfors %}
+	<tr>
+		<td>{{ f.ixFixFor }}</td>
+		<td>{{ f.sFixFor }}</td>
+		<td>{{ f.ixProject }}</td>
+		<td>{{ f.sProject }}</td>
+		<td>{{ f.dt }}</td>
+		<td>{{ f.dtStart }}</td>
+		<td>{{ f.cases|length }}</td>
+		<td>{{ f.person_hours }}</td>
+		<td>${{ f.cost|round(2, 'floor') }}</td>
+	</tr>
+{% endfor %}
+
+</table>

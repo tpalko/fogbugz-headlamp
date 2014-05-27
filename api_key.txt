@@ -1,0 +1,7 @@
+quadespiooa20s5ghq507mkegula65
+https://palkosoftware.fogbugz.com/api.asp?token=quadespiooa20s5ghq507mkegula65&
+
+cmd=search&q=foo
+https://palkosoftware.fogbugz.com/api.asp?token=quadespiooa20s5ghq507mkegula65&cmd=listFixFors
+
+http://help.fogcreek.com/8202/xml-api#Lists

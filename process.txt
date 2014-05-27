@@ -1,0 +1,14 @@
+List milestones
+	https://palkosoftware.fogbugz.com/api.asp?token=quadespiooa20s5ghq507mkegula65&cmd=listFixFors
+
+Scrape all past milestones - dt < now
+	collect ixFixFor, sFixFor, ixProject, sProject, dtStart, dt
+
+List cases
+	https://palkosoftware.fogbugz.com/api.asp?token=quadespiooa20s5ghq507mkegula65&q=&cmd=search&cols=ixFixFor,ixProject,sStatus,ixPersonResolvedBy,hrsElapsed,hrsElapsedExtra
+
+Scrape all cases with ixFixFor in 'past' list
+
+	Group by milestone - sFixFor
+		Collect cases by ixPersonResolvedBy
+		Sum hrsElapsed
