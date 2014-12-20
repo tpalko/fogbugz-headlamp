@@ -1,5 +1,33 @@
 <h1>{{description}}</h1>
-<h2>"{{filter}}": ${{total_cost|round(2, 'floor')}}</h2>
+<h2>"{{milestone_filter}}": ${{total_cost|round(2, 'floor')}}</h2>
+
+<form method="post">
+
+	<div>
+		<label for="milestone_filter">Milestone Name Filter</label>
+		<input type="text" name="milestone_filter" value="{{ milestone_filter }}" />
+	</div>
+	<div>
+		<label for="lastmilestone_filter">Last Milestone</label>
+		<select name="lastmilestone_filter">
+			<option value="">- Select Last Milestone -</option>
+			{% for f in milestones_filter %}
+				<option value="{{ f.ixFixFor }}" {% if lastmilestone_filter == f.ixFixFor %}selected{% endif %}>{{ f.sFixFor }} {{ f.dt }}</option>
+			{% endfor %}
+		</select>
+	</div>
+	<div>
+		<label for="person_filter">Person Filter</label>
+		<select name="person_filter">
+			<option value="">- Select Person -</option>
+			{% for p,v in person_names.iteritems() %}
+			<option value="{{p}}" {% if person_filter == p %}selected{% endif %}>{{v}}</option>
+			{% endfor %}
+		</select>
+	</div>
+	<input type="submit" />
+
+</form>
 
 <table>
 	<tr>
