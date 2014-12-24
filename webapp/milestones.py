@@ -9,18 +9,35 @@ import re
 from datetime import datetime
 import traceback
 import logging
+import ConfigParser
 
 logging.basicConfig(level=logging.DEBUG)
 
 app = Flask(__name__)
 app.debug = True
 
-fb = FogBugz("https://palkosoftware.fogbugz.com") 
-fb.logon("tim@palkosoftware.com", "Ilmgitmn8")
+config = ConfigParser.ConfigParser()
+config.read('./config/milestones.cfg')
+
+fb = FogBugz(config.get('fogbugz', 'url')) 
+fb.logon(config.get('fogbugz', 'account_name'), config.get('fogbugz', 'password'))
 
 person_names = {}
 
-rates = {'Tim Palko': 85, 'Aaron Volkmann': 85, 'Darren Slimick': 20, 'Howard Jackson': 85, 'Rick McNerny': 0, 'Dave Kleinschmidt': 85}
+# - 'names' is a comma-delimited list of user names as they appear in your Fogbugz configuration
+billing_names = config.get('billing', 'names').split(',')
+# - 'rates' is a comma-delimited list of hourly rates at which each user in the 'names' list bills out, respectively
+billing_rates = config.get('billing', 'rates').split(',')
+
+rates = dict(zip(billing_names, billing_rates))
+
+def date_format(s):
+	if s is not None:
+		return s.strftime("%Y-%m-%d")
+	else:
+		return "-"
+
+app.jinja_env.filters['date_format'] = date_format
 
 class fixfor():
 
@@ -33,6 +50,7 @@ class fixfor():
 		self.dtStart = dtStart
 		self.cases = []
 		self.person_hours = {}
+		self.total_hours = 0
 		self.cost = 0
 
 class case():
@@ -71,28 +89,38 @@ def milestones():
 
 		milestone_filter = None
 		person_filter = None
-		lastmilestone_filter = None
+		start_milestone = None
+		end_milestone = None
+		single_milestone = False
 
 		if request.method == "POST":
 			milestone_filter = request.form['milestone_filter'] if request.form['milestone_filter'] != "" else ""
 			person_filter = request.form['person_filter'] if request.form['person_filter'] != "" else None
-			lastmilestone_filter = request.form['lastmilestone_filter'] if request.form['lastmilestone_filter'] != "" else None
+			start_milestone = request.form['start_milestone'] if request.form['start_milestone'] != "" else None
+			end_milestone = request.form['end_milestone'] if request.form['end_milestone'] != "" else None
+			#single_milestone = bool(request.form['single_milestone']) if 'single_milestone' in request.form else False
 
 		fixforlist = fb.listFixFors()
-
-		#logging.debug(fixforlist.prettify())
 
 		fixfors = []
 		milestones_filter = []
 		now = datetime.now()
-		cutoff = now
+		start_cutoff = datetime.strptime("1970-01-01 00:00:00", "%Y-%m-%d %H:%M:%S")
+		end_cutoff = now
 
-		if lastmilestone_filter is not None and lastmilestone_filter != "":
-			lastmilestone = fixforlist.findAll(text=re.compile("^%s$" %(lastmilestone_filter)))
-			if len(lastmilestone) > 0:
-				cutoff = datetime.strptime(lastmilestone[0].parent.parent.dt.string, "%Y-%m-%dT%H:%M:%SZ")
-				logging.debug(cutoff)
+		if start_milestone is not None and start_milestone != "":
+			start_fixfor = fixforlist.findAll(text=re.compile("^%s$" %(start_milestone)))
+			if len(start_fixfor) > 0:
+				start_cutoff = datetime.strptime(start_fixfor[0].parent.parent.dt.string, "%Y-%m-%dT%H:%M:%SZ")
+				logging.debug("start cutoff %s" % start_cutoff)
 
+		if end_milestone is not None and end_milestone != "":
+			end_fixfor = fixforlist.findAll(text=re.compile("^%s$" %(end_milestone)))
+			if len(end_fixfor) > 0:
+				end_cutoff = datetime.strptime(end_fixfor[0].parent.parent.dt.string, "%Y-%m-%dT%H:%M:%SZ")
+				logging.debug("end cutoff %s" % end_cutoff)
+
+		total_hours = 0
 		total_cost = 0
 
 		for f in fixforlist.findAll('fixfor'):
@@ -122,7 +150,7 @@ def milestones():
 				startdate))
 
 			# - we're invoicing whole milestones, so we don't want to factor in milestones that haven't ended yet
-			if enddate <= cutoff:
+			if enddate <= end_cutoff and enddate >= start_cutoff:
 
 				fixfors.append(fixfor(
 						f.ixfixfor.string, 				
@@ -170,19 +198,26 @@ def milestones():
 
 				if person_name is None:
 					continue
+
+				rate = float(rates[person_name])
+
+				if rate == 0:
+					continue
 					
 				if person_name not in f.person_hours:				
 					f.person_hours[person_name] = 0
 
 				f.person_hours[person_name] += c.hrsElapsed
-				f.cost += c.hrsElapsed*rates[person_name]
+				f.total_hours += c.hrsElapsed
+				f.cost += c.hrsElapsed*rate
 
+			total_hours += f.total_hours
 			total_cost += f.cost
 
 		fixfors = sorted(fixfors, key=lambda fixfor: fixfor.dt, reverse=True)
 		milestones_filter = sorted(milestones_filter, key=lambda fixfor: fixfor.dt, reverse=True)
 
-		return render_template('milestones.html', person_names=person_names, milestones_filter=milestones_filter, milestone_filter=milestone_filter, person_filter=person_filter, lastmilestone_filter=lastmilestone_filter, total_cost=total_cost, description=description, fixfors=fixfors)
+		return render_template('milestones.html', person_names=person_names, milestones_filter=milestones_filter, milestone_filter=milestone_filter, person_filter=person_filter, start_milestone=start_milestone, end_milestone=end_milestone, single_milestone=single_milestone, total_hours=total_hours, total_cost=total_cost, description=description, fixfors=fixfors)
 
 	except:
 		
