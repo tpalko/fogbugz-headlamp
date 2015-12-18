@@ -12,7 +12,7 @@
 				<div class="col-md-12">
 
 					<h2>{{description}}</h2>
-					<h3>{% if milestone_filter %}"{{milestone_filter}}":{% endif %} ${{total_cost|round(2, 'floor')}} / {{total_hours|round(5, 'floor')}} hours</h3>
+					<h3>{% if milestone_filter %}"{{milestone_filter}}":{% endif %} ${{total_cost|round(2, 'floor')}} / {{total_hours|round(2, 'floor')}} hours</h3>
 				</div>
 			</div>
 
@@ -49,6 +49,16 @@
 							<input type="checkbox" name="single_milestone" />
 						</div>
 						-->
+						<div>
+							<label for="project_filter">Project Filter</label>
+                            {{project_filter}}
+							<select name="project_filter">
+								<option value="">- Select Project -</option>
+								{% for p,v in project_names.iteritems() %}
+								<option value="{{p}}" {% if project_filter == p %}selected{% endif %}>{{v}}</option>
+								{% endfor %}
+							</select>
+						</div>
 						<div>
 							<label for="person_filter">Person Filter</label>
 							<select name="person_filter">

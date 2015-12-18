@@ -1,3 +1,4 @@
 *.pyc
-api_key.txt
-process.txt
+instance/
+env/
+.fuse_hidden*
