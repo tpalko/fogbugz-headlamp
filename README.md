@@ -1,17 +1,13 @@
 # Quik Strt
 
-1. Fill out webapp/config/milestones.cfg with appropriate information for your Fogbugz account
+1. Fill out instance/config.py with appropriate information for your Fogbugz account
 2. Install pip requirements:
 
-		milestone_invoicing$ sudo pip install -r requirements.txt
-		..
+		$ sudo pip install -r requirements.txt
 
 3. Run the app
 
-		milestone_invoicing/webapp$ python milestones.py
-
-		INFO:werkzeug: * Running on http://127.0.0.1:5000/
-		INFO:werkzeug: * Restarting with reloader
+		$ python run.py
 
 # Notes
 
