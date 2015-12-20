@@ -1,0 +1,62 @@
+<!doctype html>
+<html>
+	<head>
+		<!-- Latest compiled and minified CSS -->
+		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css">
+		<title>HeadLmp</title>
+	</head>
+	
+	{% macro render_field(field, placeholder=None) %}
+	{% if field.errors %}
+	<div>
+	{% elif field.flags.error %}
+	<div>
+	{% else %}
+	<div>
+	{% endif %}
+	    {% set css_class = 'form-control ' + kwargs.pop('class', '') %}
+	    {{ field(class=css_class, placeholder=placeholder, **kwargs) }}
+	</div>
+	{% endmacro %}
+
+	<body>
+
+		<div class="container">
+
+			<div class="row">
+				<div class="col-md-4">
+					<h1>HeadLmp</h1>
+				</div>
+				<div class="col-md-8">
+					{% if current_user.is_authenticated %}
+					<div>Hello, {{current_user.name}} </div>
+					<a href="{{ url_for('auth.logout') }}">Logout</a>
+					{% endif %}					
+				</div>
+			</div>
+
+		    {% with errors = get_flashed_messages(category_filter=["error"]) %}
+		    {% if errors %}
+		    <div>
+		    {% for error in errors %}
+		    {{ error }}<br>
+		    {% endfor %}
+		    </div>
+		    {% endif %}
+		    {% endwith %}
+
+		    {% if form and form.errors %}
+		    <div>
+		    {% for field, error in form.errors.items() %}
+		    {% for e in error %}
+		    {{ e }}<br>
+		    {% endfor %}
+		    {% endfor %}
+		    </div>
+		    {% endif %}
+
+			{% block content %}{% endblock %}
+
+		</div>
+	</body>
+</html>

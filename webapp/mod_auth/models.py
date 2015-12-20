@@ -1,7 +1,29 @@
-# Import the database object (db) from the main application module
-# We will define this inside /app/__init__.py in the next sections.
 from webapp.models import CustomBase
-from sqlalchemy import Column, func, String, SmallInteger, Integer, DateTime
+from sqlalchemy import Column, func, String, SmallInteger, Integer, DateTime, Boolean
+from flask.ext.login import UserMixin
+
+class LoginUser(UserMixin):
+    
+    is_anonymous = True
+    is_authenticated = False
+    is_active = False
+
+    def __init__(self, name, id, active):
+        self.name = name
+        self.id = id
+        self.is_active = active
+
+    def is_active(self):
+        return self.is_active
+
+    def is_anonymous(self):
+        return self.is_anonymous
+
+    def is_authenticated(self):
+        return self.is_authenticated
+
+    def get_id(self):
+        return unicode(self.id)
 
 # Define a User model
 class User(CustomBase):
@@ -19,7 +41,7 @@ class User(CustomBase):
     # Authorisation Data: role & status
     role     = Column(SmallInteger, nullable=False)
     status   = Column(SmallInteger, nullable=False)
-
+    
     # New instance instantiation procedure
     def __init__(self, name, email, password):
 
