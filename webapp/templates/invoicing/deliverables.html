@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block content %}
+	
+	<div class="row">
+		<div class="col-md-12">
+			<a href="{{ url_for('invoicing.deliverable_form') }}" class="btn btn-default">new deliverable</a>
+		</div>
+	</div>
+	<div class="row">
+		<div class="col-md-12">
+
+			<table class="table table-striped">
+				<tr>
+					<th>Deliverable</th>							
+					<th>Estimate</th>							
+					<th>Invoiced</th>
+					<th>Paid</th>
+					<th># Cases</th>
+					<th>Balance</th>
+				</tr>
+
+			{% for deliverable in deliverables %}
+				<tr>
+					<td>{{ deliverable.name }}</td>
+					<td>${{ "%.2f" % deliverable.festimate }}</td>
+					<td>{{ deliverable.binvoiced }}</td>
+					<td>{{ deliverable.bpaid }}</td>
+					<td>{{ deliverable.cases.count() }}</td>
+					<td>${{ deliverable.balance() }}</td>
+					<td><a href="{{ url_for('invoicing.deliverable_form', deliverable_id=deliverable.id) }}" class="btn btn-default">edit</a>
+				</tr>
+			{% endfor %}
+
+			</table>
+		</div>
+	</div>
+
+{% endblock %}

@@ -1,0 +1,5 @@
+<h4>
+	{% if not milestone.bfrozen %}NOT{% endif %} Frozen - {% if not milestone.binvoiced %}NOT{% endif %} Invoiced - {% if not milestone.bpaid %}NOT{% endif %} Paid
+</h4>
+
+{% include 'invoicing/_milestone_buttons.html' %}

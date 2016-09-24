@@ -1,0 +1,43 @@
+<tr class="{% if case.fogbugzusercases[0].fhours == 0 %}unbillable{% endif %}">
+	<td>
+		{{ case.stitle }}
+	</td>
+	<td class="category_label">
+		<span class="label label-info text-uppercase category_name">{{ case.category.name }}</span>
+		<span class="label label-default text-uppercase deliverable_name">{{ case.deliverable.name }}</span>
+	</td>
+	<td>
+		<select name="category_{{ case.id }}">
+			<option value="">- none -</option>
+			{% for cat in categories %}														
+				<option value="{{ cat.id }}" {% if case.category.name == cat.name %}selected{% endif %}>{{ cat.name }}</option>
+			{% endfor %}
+		</select>
+	</td>
+	<td>
+		{{ case.ixpriority }}
+	</td>
+	<td>
+		{{ case.scategory }}
+	</td>
+	<td>
+		<a href="https://palkosoftware.fogbugz.com/default.asp?{{ case.sticket }}" target="_blank">view case</a>
+	</td>
+	<td>
+		{{ case.fogbugzusercases[0].fhours }}
+	</td>
+	<td>
+		${{ case.fogbugzusercases[0].cost() }}
+		{% if case.fogbugzusercases[0].bcomped %}<br /><span class="label label-warning text-uppercase">comped</span>{% endif %}	
+	</td>
+	<td>
+		<select name="action_{{ case.id }}">
+			<option value="">- Choose Action -</option>
+			<option value="comp">Comp</option>
+			<option value="uncomp">Uncomp</option>
+			{% for deliverable in open_deliverables %}
+				<option value="deliverable_{{ deliverable.id }}">Associate with "{{ deliverable.name }}"</option>
+			{% endfor %}
+		</select>
+	</td>
+</tr>

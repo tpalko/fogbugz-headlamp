@@ -39,8 +39,8 @@ class User(CustomBase):
     password = Column(String(192),  nullable=False)
 
     # Authorisation Data: role & status
-    role     = Column(SmallInteger, nullable=False)
-    status   = Column(SmallInteger, nullable=False)
+    role     = Column(String(32), nullable=False)
+    is_active   = Column(Boolean, nullable=False)
     
     # New instance instantiation procedure
     def __init__(self, name, email, password):
@@ -50,7 +50,7 @@ class User(CustomBase):
         self.password = password
 
         self.role = 'admin'
-        self.status = 'active'
+        self.is_active = True
 
     def __repr__(self):
         return '<User %r>' % (self.name)    

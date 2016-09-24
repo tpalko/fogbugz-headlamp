@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block head %}
+
+{% endblock %}
+
+{% block content %}
+
+<table class="table table-striped">
+
+	<tr>
+		<th>Invoice Created Date</th>
+		<th>Milestones</th>
+		<th>Amount</th>
+		<th></th>
+	</tr>
+
+{% for i in invoices %}
+
+	<tr>
+		<td>{{ i.date_created }}</td>
+		<td>{{ i.milestones.all()|length }}</td>
+		<td>${{ i.billable_cost() }}</td>
+		<td><a href="{{ url_for("invoicing.invoice", invoice_id=i.id) }}" class="btn btn-default">view</a></td>
+	</tr>
+
+{% endfor %}
+
+</table>
+
+{% endblock %}

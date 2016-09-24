@@ -1,0 +1,10 @@
+div.error {
+	color: red;
+	background-color: #fcc;
+	padding: 1em;
+	margin: 1em;
+}
+
+tr.unbillable {
+	color: #ccc;
+}

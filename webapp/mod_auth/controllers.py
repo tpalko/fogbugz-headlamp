@@ -27,7 +27,7 @@ def signin():
 
         logger.debug("Looking for user %s " % form.email.data)
 
-        user = User.query.filter_by(email=form.email.data).first()
+        user = g.db.query(User).filter_by(email=form.email.data).first()
 
         if user and check_password_hash(user.password, form.password.data):
 
@@ -38,7 +38,7 @@ def signin():
                 remember = True
 
             logger.debug("Logging in user %s.." % user.name)
-            session_user = LoginUser(user.name, user.id, user.status == 'active')
+            session_user = LoginUser(user.name, user.id, user.is_active)
             login_user(session_user, remember)
             logger.debug("Logged in %s" % user.name)
 
@@ -66,8 +66,8 @@ def register():
 
         u = User(form.name.data, form.email.data, generate_password_hash(form.password.data))
 
-        db_session.add(u)
-        db_session.commit()
+        g.db.add(u)
+        g.db.commit()
 
         return redirect(url_for('auth.signin'))
 

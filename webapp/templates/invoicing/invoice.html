@@ -1,0 +1,175 @@
+{% extends "base.html" %}
+
+{% block head %}
+
+<style type="text/css">
+
+	.category, .case {
+		font-size: 0.8em;
+	}
+
+	.category > div:nth-child(1), .case > div:nth-child(1) {
+		border-bottom: 1px dashed black;
+	}
+
+	.cost {
+		font-family: "Montserrat";
+	}
+
+	.subtotal {
+		border-bottom: 1px solid black;
+	}
+
+	.total {
+		font-size: 1.2em;
+	}
+
+	.subtotal, .total, .row.milestone {
+		margin-top: 1em;
+		margin-bottom: 1em;
+	}
+
+</style>
+
+{% endblock %}
+
+{% block content %}
+
+{% if not invoice %}
+<div class="row">
+	<div class="col-xs-6">
+		<div class="btn-group" role="group">
+			<button class="btn btn-default" id="create_invoice">Create Invoice</button>
+		</div>
+	</div>
+</div>
+{% endif %}
+
+{% if invoice %}
+
+	{% if not print_view %}
+	<div class="row">
+		<div class="col-xs-6">
+			<a href="?print=True" target="_blank">print view</a>
+		</div>
+	</div>
+	{% endif %}
+
+	<div class="row">
+		<div class="col-xs-6">				
+			<h3>{{ invoice.company.name }}</h3>
+			{{ invoice.company.addressline1 }} <br />
+			{{ invoice.company.addressline2 }}
+		</div>
+		<div class="col-xs-6 text-right">
+			<h2>INVOICE</h2>
+			Statement Date: {{ invoice.date_created|date_format }}
+			<h4 class="cost">Amount Due: ${{ total }}</h4>
+		</div>
+	</div>
+	<div class="row" style="margin-top: 1em;">
+		<div class="col-xs-2 text-right">				
+			Prepared for: 
+		</div>
+		<div class="col-xs-4">
+			{{ invoice.customer.name }}<br />
+			{{ invoice.customer.addressline1 }} <br />
+			{{ invoice.customer.addressline2 }}
+		</div>
+	</div>
+
+{% endif %}
+
+{% for milestone in milestones %}
+
+	<div class="row milestone">
+		<div class="col-xs-12">
+			<h5>
+				{{ milestone.sfixfor }} <small>{{ milestone.project.sproject }} / {{ milestone.dtstart|date_format }} to {{ milestone.dt|date_format }}</small>
+			</h5>
+		</div>
+	</div>
+
+	{% for category in milestone.get_categories(include_empty_categories=False) %}
+		<div class="row category">
+			<div class="col-xs-8">
+				{{ category.name }}
+				<span class="help-block col-xs-offset-1">
+					{% trans count=category.cases.all()|length %}
+						case
+					{% pluralize %}
+						cases
+					{% endtrans %} {{ category.cases.all()|ticket|join(", ")|safe }}
+				</span>
+			</div>			
+			<div class="col-xs-2 text-right cost">${{ category.cost() }}</div>
+		</div>
+	{% endfor %}
+
+	{% for case in milestone.uncategorized_cases(include_zero_cost=False) %}	
+		<div class="row case">
+			<div class="col-xs-8">{{ case.stitle }} (case {{ case.ticket_url()|safe }})</div>
+			<div class="col-xs-2 text-right cost">${{ case.fogbugzusercases[0].cost() }}</div>
+		</div>
+	{% endfor %}
+
+	{% if milestone.no_charge_cases()|length > 0 %}
+	<h4><small>Other</small></h4>
+	<div class="row case">
+		<div class="col-xs-7 col-xs-offset-1">Cases {{ milestone.no_charge_cases()|ticket|join(", ")|safe }}</div>
+		<div class="col-xs-2 text-right cost">$0.00</div>
+	</div>
+	{% endif %}
+	
+	{% if milestone.comped_cases()|length > 0 %}<h4><small>Comp / Credit</small></h4>{% endif %}
+	{% for case in milestone.comped_cases() %}
+		<div class="row case">
+			<div class="col-xs-7 col-xs-offset-1">{{ case.stitle }} (case {{ case.ixbug }})</div>
+			<div class="col-xs-2 text-right cost">( ${{ case.fogbugzusercases[0].cost() }} )</div>
+		</div>
+	{% endfor %}
+
+	{% if milestone.deliverables()|length > 0 %}<h4><small>Paid Deliverables Credit</small></h4>{% endif %}
+	{% for deliverable in milestone.deliverables() %}
+		<div class="row case">
+			<div class="col-xs-7 col-xs-offset-1">
+				{{ deliverable.name }}
+				<span class="help-block col-xs-offset-1">
+					{% trans count=deliverable.cases_in_milestone(milestone)|length %}
+						case
+					{% pluralize %}
+						cases
+					{% endtrans %} {{ deliverable.cases_in_milestone(milestone)|ticket|join(", ")|safe }}
+				</span>
+			</div>
+			<div class="col-xs-2 text-right cost">( ${{ deliverable.cost_in_milestone(milestone) }} )</div>
+		</div>
+	{% endfor %}
+
+	<div class="row subtotal">
+		
+		<div class="col-xs-12 text-right cost">
+			${{ milestone.billable_cost() }}
+		</div>
+	</div>
+
+{% endfor %}
+
+<div class="row total">
+	<div class="col-xs-10">
+		<h4>Total Due</h4>
+	</div>
+	<div class="col-xs-2 text-right">
+		<h4 class="cost">${{ total }}</h4>
+	</div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+	
+	<script type="text/javascript">
+		{% include 'static/js/invoicing/invoice.js' %}
+	</script>
+
+{% endblock %}

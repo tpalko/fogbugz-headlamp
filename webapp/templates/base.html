@@ -2,8 +2,10 @@
 <html>
 	<head>
 		<!-- Latest compiled and minified CSS -->
-		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css">
+		<link rel="stylesheet" href="{{ url_for('static', filename='bower_components/bootstrap/dist/css/bootstrap.min.css') }}" />
+		<link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}" />
 		<title>HeadLmp</title>
+		{% block head %}{% endblock %}
 	</head>
 	
 	{% macro render_field(field, placeholder=None) %}
@@ -23,23 +25,33 @@
 
 		<div class="container">
 
-			<div class="row">
-				<div class="col-md-4">
+			<div class="row" style="min-height: 1em;">
+				{% if not print_view %}
+				<div class="col-md-3">
 					<h1>HeadLmp</h1>
 				</div>
-				<div class="col-md-8">
+				<div class="col-md-5">
+					<div class="btn-group" role="group">
+						<a href="{{ url_for('invoicing.milestones') }}" class="btn btn-default">Milestones</a>
+						<a href="{{ url_for('invoicing.deliverables') }}" class="btn btn-default">Deliverables</a>
+						<a href="{{ url_for('invoicing.invoice') }}" class="btn btn-default">Current Invoice</a>
+						<a href="{{ url_for('invoicing.invoices') }}" class="btn btn-default">Invoices</a>
+					</div>
+				</div>
+				<div class="col-md-4">
 					{% if current_user.is_authenticated %}
 					<div>Hello, {{current_user.name}} </div>
 					<a href="{{ url_for('auth.logout') }}">Logout</a>
 					{% endif %}					
 				</div>
+				{% endif %}
 			</div>
 
-		    {% with errors = get_flashed_messages(category_filter=["error"]) %}
+		    {% with errors = get_flashed_messages() %}
 		    {% if errors %}
 		    <div>
 		    {% for error in errors %}
-		    {{ error }}<br>
+		    <div class="error">{{ error }}</div>
 		    {% endfor %}
 		    </div>
 		    {% endif %}
@@ -58,5 +70,15 @@
 			{% block content %}{% endblock %}
 
 		</div>
+
+		<script type="text/javascript" src="{{ url_for('static', filename='bower_components/jquery/dist/jquery.min.js') }}"></script>
+		<script type="text/javascript" src="{{ url_for('static', filename='bower_components/jquery-ui/jquery-ui.min.js') }}"></script>
+		<script type="text/javascript" src="{{ url_for('static', filename='bower_components/fancybox/source/jquery.fancybox.pack.js') }}"></script>
+		
+		<script type="text/javascript">
+			{% include 'static/js/base.js' %}
+		</script>
+
+		{% block extra_js %}{% endblock %}
 	</body>
 </html>

@@ -4,7 +4,9 @@
 
 	<div class="row">
 		<div class="col-md-12">
-			<h3>{{description}}: {% if milestone_filter %}"{{milestone_filter}}":{% endif %} ${{total_cost|round(2, 'floor')}} / {{total_hours|round(2, 'floor')}} hours</h3>
+			{#
+			<h3>{{description}}: {% if milestone_filter %}"{{milestone_filter}}":{% endif %} ${{total_cost|round(2, 'floor')}} / {{total_hours|round(2, 'floor')}} hours</h3>			
+			#}
 		</div>
 	</div>
 
@@ -14,6 +16,15 @@
 			<form method="post">
 
 				<div>
+					<label for="project_filter">Project Filter</label>
+					<select name="project_filter">
+						<option value="">- Select Project -</option>
+						{% for p in projects %}
+						<option value="{{p.id}}" {% if project_filter == p.id %}selected{% endif %}>{{p.sproject}}</option>
+						{% endfor %}
+					</select>
+				</div>
+				<div>
 					<label for="milestone_filter">Milestone Name Filter</label>
 					<input type="text" name="milestone_filter" value="{% if milestone_filter %}{{milestone_filter}}{% endif %}" />
 				</div>
@@ -22,7 +33,7 @@
 					<select name="start_milestone">
 						<option value="">- Select Start Milestone -</option>
 						{% for f in milestones_filter %}
-							<option value="{{ f.ixFixFor }}" {% if start_milestone == f.ixFixFor %}selected{% endif %}>{{ f.sFixFor }} {{ f.dt }}</option>
+							<option value="{{ f.id }}" {% if start_milestone == f.id %}selected{% endif %}>{{ f.sFixFor }} {{ f.dt }}</option>
 						{% endfor %}
 					</select>
 				</div>
@@ -31,7 +42,7 @@
 					<select name="end_milestone">
 						<option value="">- Select End Milestone -</option>
 						{% for f in milestones_filter %}
-							<option value="{{ f.ixFixFor }}" {% if end_milestone == f.ixFixFor %}selected{% endif %}>{{ f.sFixFor }} {{ f.dt }}</option>
+							<option value="{{ f.id }}" {% if end_milestone == f.id %}selected{% endif %}>{{ f.sFixFor }} {{ f.dt }}</option>
 						{% endfor %}
 					</select>
 				</div>
@@ -41,28 +52,27 @@
 					<input type="checkbox" name="single_milestone" />
 				</div>
 				-->
-				<div>
-					<label for="project_filter">Project Filter</label>
-                    {{project_filter}}
-					<select name="project_filter">
-						<option value="">- Select Project -</option>
-						{% for p,v in project_names.iteritems() %}
-						<option value="{{p}}" {% if project_filter == p %}selected{% endif %}>{{v}}</option>
-						{% endfor %}
-					</select>
-				</div>
+				
 				<div>
 					<label for="person_filter">Person Filter</label>
 					<select name="person_filter">
 						<option value="">- Select Person -</option>
-						{% for p,v in person_names.iteritems() %}
-						<option value="{{p}}" {% if person_filter == p %}selected{% endif %}>{{v}}</option>
+						{% for p in people %}
+						<option value="{{p.id}}" {% if person_filter == p.id %}selected{% endif %}>{{p.sfullname}}</option>
 						{% endfor %}
 					</select>
 				</div>
-				<input type="submit" class="btn btn-primary" />
+				<input type="submit" class="btn btn-primary" value="Apply Filter" />
 
 			</form>
+		</div>
+	</div>
+
+	<div class="row" style="margin: 1em 0em;">
+		<div class="col-md-12">
+			<div class="btn-group" role="group">
+				<a href="{{ url_for('invoicing.refresh') }}" class="btn btn-info">Refresh</a>				
+			</div>
 		</div>
 	</div>
 
@@ -77,22 +87,32 @@
 					<th>Start</th>
 					<th>End</th>
 					<th nowrap># Cases</th>
-					<th>Personnel Hours</th>
-					<th>Total Hours</th>
 					<th>Cost</th>
+					<th>Billable</th>
+					<th></th>
+					<th></th>
 				</tr>
 
-			{% for f in fixfors %}
+			{% for milestone in milestones %}
 				<tr>
-					<td>{{ f.ixFixFor }}</td>
-					<td nowrap>{{ f.sFixFor }}</td>							
-					<td nowrap>{{ f.sProject }}</td>							
-					<td nowrap>{{ f.dtStart|date_format }}</td>
-					<td nowrap>{{ f.dt|date_format }}</td>
-					<td>{{ f.cases|length }}</td>
-					<td>{{ f.person_hours }}</td>
-					<td>{{ f.total_hours }}</td>
-					<td>${{ f.cost|round(2, 'floor') }}</td>
+					<td>{{ milestone.ixfixfor }}</td>
+					<td nowrap>{{ milestone.sfixfor }}</td>							
+					<td nowrap>{{ milestone.project.sproject }}</td>							
+					<td nowrap>{{ milestone.dtstart|date_format }}</td>
+					<td nowrap>{{ milestone.dt|date_format }}</td>
+					<td>{{ milestone.cases.all()|length }}</td>
+					<td>${{ milestone.cost() }}</td>
+					<td>${{ milestone.billable_cost() }}</td>
+					<td>
+						<div class="btn-group" role="group">
+							<a href="{{ url_for('invoicing.milestone_detail', milestone_id=milestone.id) }}" class="btn btn-default">See Detail</a>							
+						</div>
+					</td>
+					<td>
+						<div id="milestone_buttons_{{ milestone.id }}">
+							{% include 'invoicing/_milestone_status_and_buttons.html' %}
+						</div>
+					</td>
 				</tr>
 			{% endfor %}
 

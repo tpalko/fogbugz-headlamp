@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+
+{% block content %}
+	
+	<div class="row">
+		<div class="col-md-12">
+			<form method="POST" accept-charset="UTF-8" role="form">
+				{{ form.csrf_token }}
+				{{ render_field(form.name, placeholder="Name", autofocus="") }}
+				{{ render_field(form.festimate, placeholder="Amount") }}
+				<button type="submit" name="submit">Save</button>
+			</form> 
+		</div>
+	</div>
+
+{% endblock %}

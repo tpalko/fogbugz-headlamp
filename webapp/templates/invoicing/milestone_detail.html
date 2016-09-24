@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="row">
+
+	<div class="col-md-12">
+
+		<h2>{{ milestone.sfixfor }} <small><span class="help-text">{{ milestone.project.sproject }}</span></small></h2>
+		<h4>
+			From {{ milestone.dtstart }} to {{ milestone.dt }}
+		</h4>
+		<h4>
+			{{ milestone.cases.all()|length }} Cases / ${{ milestone.cost() }}
+		</h4>
+		
+		<div id="milestone_buttons_{{ milestone.id }}">
+			{% include 'invoicing/_milestone_status_and_buttons.html' %}
+		</div>
+
+		<form method="post" action="{{ url_for('invoicing.category_create', milestone_id=milestone.id) }}">
+
+			<div>
+				<label for="category_name">New Category</label>
+				<input type="text" name="category_name" value="" />
+				<input type="submit" class="btn btn-success" value="Add" />
+			</div>
+
+		</form>
+
+		<table id="milestone_categories" class="table table-striped" width="100%">
+		{% for mc in milestone.categories %}
+			<tr data-categoryid="{{ mc.id }}">
+				<td class="category_name">
+					{{ mc.name }}
+				</td>
+				<td class="category_case_count">
+					{{ mc.cases.all()|length }}
+				</td>
+				<td class="category_case_cost">
+					${{ mc.cost() }}
+				</td>
+			</tr>	
+		{% endfor %}
+			<tr>
+				<td class="category_name">
+					Uncategorized
+				</td>
+				<td class="category_case_count">{{ uncategorized_case_count }}</td>
+				<td class="category_case_cost">${{ uncategorized_case_cost }}</td>
+			</tr>
+		</table>			
+
+		<table id="milestone_cases" class="table table-striped" width="100%">
+
+		{% for case in milestone_cases %}
+
+			{% include 'invoicing/_milestone_detail_case_row.html' %}
+
+		{% endfor %}
+
+		</table>
+
+	</div>
+
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+	
+	<script type="text/javascript">
+		{% include 'static/js/invoicing/milestone_detail.js' %}
+	</script>
+
+{% endblock %}

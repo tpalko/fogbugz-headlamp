@@ -1,0 +1,11 @@
+<div class="btn-group" role="group" data-milestoneid="{{ milestone.id }}">
+	{% if not milestone.bfrozen and not milestone.binvoiced %}
+		<button type="button" class="btn btn-default freeze">Freeze</button>
+	{% endif %}
+	{% if milestone.bfrozen and not milestone.binvoiced %}
+		<button type="button" class="btn btn-default unfreeze">Un-Freeze</button>
+	{% endif %}
+	{% if milestone.binvoiced and not milestone.bpaid %}
+		<button type="button" class="btn btn-default file_payment">File Payment</button>
+	{% endif %}
+</div>
