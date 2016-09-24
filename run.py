@@ -1,4 +1,11 @@
-from webapp import app, manager
+from webapp import app
+from flask.ext.script import Manager, Server
+from flask.ext.migrate import MigrateCommand
 
-#app.run(host='0.0.0.0', port=8080)
+server = Server(host='127.0.0.1', port=8080)
+
+manager = Manager(app)
+manager.add_command('db', MigrateCommand)
+manager.add_command('runserver', server)
+
 manager.run()
