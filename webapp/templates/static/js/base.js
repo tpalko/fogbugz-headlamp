@@ -28,3 +28,9 @@ $(document).ready(function(){
 		closeEffect	: 'none'
 	});
 });	
+
+$(document).on('click', '[disabled]', function(e){
+
+	e.preventDefault();
+	//alert('disabled!');
+});
