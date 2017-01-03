@@ -1,5 +1,7 @@
 <h4>
-	{% if not milestone.bfrozen %}NOT{% endif %} Frozen - {% if not milestone.binvoiced %}NOT{% endif %} Invoiced - {% if not milestone.bpaid %}NOT{% endif %} Paid
+	<span class="label label-{{ milestone.bfrozen_label_class() }}">{% if not milestone.bfrozen %}NOT{% endif %} Frozen</span> 
+	<span class="label label-{{ milestone.invoiced_label_class() }}">{% if not milestone.invoice %}NOT{% endif %} Invoiced</span> 
+	<span class="label label-{{ milestone.bpaid_label_class() }}">{% if not milestone.bpaid %}NOT{% endif %} Paid</span>
 </h4>
 
 {% include 'invoicing/_milestone_buttons.html' %}

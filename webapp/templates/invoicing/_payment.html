@@ -1,0 +1,10 @@
+{% include 'invoicing/_macros.html' %}
+
+<div class="row">
+	<div class="col-md-12">
+		<form method="POST" action="{{ url_for('invoicing.payment') }}">
+			{{ render_field(form.famount) }}
+			{{ render_field(form.date_deposited) }}
+		</form>
+	</div>
+</div>

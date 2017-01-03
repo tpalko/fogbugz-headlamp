@@ -1,8 +1,22 @@
-from sqlalchemy import Column, func, String, SmallInteger, Integer, DateTime, Boolean, Float
-from sqlalchemy.schema import ForeignKey
+from sqlalchemy import Column, func, String, SmallInteger, Integer, DateTime, Boolean, Float, Date
+from sqlalchemy.schema import Table, ForeignKey
 from sqlalchemy.orm import relationship
+from sqlalchemy.sql.expression import text
 from webapp.models import CustomBase
 from flask import g
+
+'''
+	FogbugzUserCase.cost()
+		-> Case.cost()
+			-> Milestone.cost() : Case.cost() for all cases
+			-> Milestone.billable_cost() : Case.cost() for all non-comped, non-deliverable cases
+				-> Invoice.billable_cost()
+			-> Category.cost()
+			-> Deliverable.balance() : estimate minus refunded amount and non-comped cases
+			-> Deliverable.cost_in_milestone() : Case.cost() for all cases if case in given milestone
+
+	Milestone.billable_cost() -> Milestone.finvoicedamount upon Invoice Finalization
+'''
 
 class Company(CustomBase):
 
@@ -62,12 +76,20 @@ class Milestone(CustomBase):
 		self.dt = dt
 		self.dtstart = dtstart
 
+	def bfrozen_label_class(self):
+		return "info" if self.bfrozen else "default"
+
+	def invoiced_label_class(self):
+		return "info" if self.invoice else "default"
+
+	def bpaid_label_class(self):
+		return "info" if self.bpaid else "default"
+
 	def billable_cost(self):
 
-		comped_case_cost = sum([ float(c.fogbugzusercases[0].cost()) for c in self.cases if c.fogbugzusercases[0].bcomped ])
-		deliverable_cost = sum([ float(d.cost_in_milestone(self)) for d in self.deliverables() ])
-
-		return "%.2f" % (float(self.cost()) - comped_case_cost - deliverable_cost)
+		non_comped_non_deliverable_case_cost = sum([ c.cost() for c in self.cases if (not c.fogbugzusercases[0].bcomped and not c.deliverable) ])
+		
+		return non_comped_non_deliverable_case_cost
 
 	def deliverables(self):
 		return set([ c.deliverable for c in self.cases if c.deliverable ])
@@ -82,12 +104,12 @@ class Milestone(CustomBase):
 	def uncategorized_cases(self, include_zero_cost=True):
 		cases = self.cases.filter(Case.category_id==None)
 		if not include_zero_cost:
-			cases = [ c for c in cases if float(c.fogbugzusercases[0].cost()) > 0 ]
+			cases = [ c for c in cases if c.cost() > 0 ]
 
 		return cases
 
 	def no_charge_cases(self):
-		cases = [ c for c in self.cases if float(c.fogbugzusercases[0].cost()) == 0 ]
+		cases = [ c for c in self.cases if c.cost() == 0 ]
 		return cases
 
 	def comped_cases(self):
@@ -97,7 +119,7 @@ class Milestone(CustomBase):
 
 	def cost(self):
 
-		return "%.2f" % sum([ float(c.fogbugzusercases[0].cost()) for c in self.cases ])
+		return sum([ c.cost() for c in self.cases ])
 		
 class Case(CustomBase):
 
@@ -128,6 +150,9 @@ class Case(CustomBase):
 		#self.ixpersonresolvedby = int(c.ixpersonresolvedby.string)
 		#self.hrsElapsed = float(c.hrselapsed.string)
 		#self.hrsElapsedExtra = float(c.hrselapsedextra.string)
+
+	def cost(self):
+		return self.fogbugzusercases[0].cost()
 
 	def ticket_url(self):
 		if not g.print_view:
@@ -169,7 +194,7 @@ class FogbugzUserCase(CustomBase):
 		rate = self.frate_override if self.frate_override > 0 else self.fogbugzuser.frate
 		hours = self.fhours_override if self.fhours_override > 0 else self.fhours
 
-		return "%.2f" % (hours*rate)
+		return (hours*rate)
 
 class Category(CustomBase):
 
@@ -184,7 +209,7 @@ class Category(CustomBase):
 		self.milestone_id = milestone_id
 
 	def cost(self):
-		return "%.2f" % sum([ float(c.fogbugzusercases[0].cost()) for c in self.cases ])
+		return sum([ c.cost() for c in self.cases ])
 
 class Deliverable(CustomBase):
 
@@ -193,21 +218,32 @@ class Deliverable(CustomBase):
 	cases = relationship('Case', backref='deliverable', lazy='dynamic')
 	name = Column(String(255), nullable=False)
 	festimate = Column(Float, nullable=False, server_default='0.0')
+	frefunded = Column(Float, nullable=False, server_default='0.0')
 	binvoiced = Column(Boolean, nullable=False, server_default='f')
 	bpaid = Column(Boolean, nullable=False, server_default='f')
+	invoice_id = Column(Integer, ForeignKey('invoice.id'), nullable=True)
+	refund_invoice_id = Column(Integer, ForeignKey('invoice.id'), nullable=True)
 
 	def __init__(self, name, festimate):
 		self.name = name
 		self.festimate = festimate
 
+	def editable(self):
+		return (not self.invoice or not self.invoice.state == 'final') and (not self.refund_invoice or not self.refund_invoice.state == 'final')
+
+	def refundable(self):
+		return self.invoice and self.invoice.state == 'final' and self.frefunded == 0 and self.balance() != 0
+
 	def balance(self):
-		return self.festimate - sum([ float(c.fogbugzusercases[0].cost()) for c in self.cases if not c.fogbugzusercases[0].bcomped ])
+		b = self.festimate - self.frefunded - sum([ c.cost() for c in self.cases if not c.fogbugzusercases[0].bcomped ])
+		b = 0 if abs(b) < 0.01 else b
+		return b
 
 	def cases_in_milestone(self, milestone):
 		return [ c for c in self.cases if c in milestone.cases ]
 
 	def cost_in_milestone(self, milestone):
-		return "%.2f" % sum([ float(c.fogbugzusercases[0].cost()) for c in self.cases if c in milestone.cases ])
+		return sum([ c.cost() for c in self.cases if c in milestone.cases ])
 
 class Invoice(CustomBase):
 
@@ -215,7 +251,28 @@ class Invoice(CustomBase):
 
 	company_id = Column(Integer, ForeignKey('company.id'), nullable=False)
 	customer_id = Column(Integer, ForeignKey('customer.id'), nullable=False)
+	state = Column(String(20), nullable=False, server_default='final')
 	milestones = relationship('Milestone', backref='invoice', lazy='dynamic')
+	unpaid_deliverables = relationship('Deliverable', foreign_keys=[Deliverable.invoice_id], backref='invoice', lazy='dynamic')
+	refund_deliverables = relationship('Deliverable', foreign_keys=[Deliverable.refund_invoice_id], backref='refund_invoice', lazy='dynamic')
 
 	def billable_cost(self):
-		return "%.2f" %(sum([ float(m.billable_cost()) for m in self.milestones.all() ]))
+
+		return sum([ m.billable_cost() for m in self.milestones.all() ]) + sum([ d.festimate for d in self.unpaid_deliverables ]) - sum([ d.frefunded for d in self.refund_deliverables ]) 
+
+class Payment(CustomBase):
+
+	__tablename__ = 'payment'
+
+	famount = Column(Float, nullable=False, server_default='0.0')
+	date_deposited = Column(Date, nullable=False, server_default=text('current_date'))
+	customer_id = Column(Integer, ForeignKey('customer.id'), nullable=False)
+	company_id = Column(Integer, ForeignKey('company.id'), nullable=False)
+
+class InvoicePayment(CustomBase):
+
+	__tablename__ = 'invoicepayment'
+
+	invoice_id = Column(Integer, ForeignKey('invoice.id'), nullable=False)
+	payment_id = Column(Integer, ForeignKey('payment.id'), nullable=False)
+	famount_apportioned = Column(Float, nullable=False, server_default='0.0')

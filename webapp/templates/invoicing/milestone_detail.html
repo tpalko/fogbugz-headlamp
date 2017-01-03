@@ -18,6 +18,10 @@
 			{% include 'invoicing/_milestone_status_and_buttons.html' %}
 		</div>
 
+		{% if milestone.invoice and milestone.invoice.state == 'working' %}
+		You are editing an invoiced milestone. <a href="{{ url_for('invoicing.invoice', invoice_id=milestone.invoice_id) }}">Return to working invoice</a>
+		{% endif %}
+
 		<form method="post" action="{{ url_for('invoicing.category_create', milestone_id=milestone.id) }}">
 
 			<div>

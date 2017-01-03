@@ -1,0 +1,16 @@
+{% macro render_field(field, placeholder=None) %}
+{% if field.errors %}
+<div>
+{% elif field.flags.error %}
+<div>
+{% else %}
+<div>
+{% endif %}
+	{% if kwargs.pop('hidden', False) %}
+		<input type="hidden" name="{{ field.name }}" value="{{ field.data }}" />
+	{% else %}
+		{% set css_class = 'form-control ' + kwargs.pop('class', '') %}
+	    {{ field.label }} {{ field(class=css_class, placeholder=placeholder, **kwargs) }}
+	{% endif %}
+</div>
+{% endmacro %}

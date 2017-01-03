@@ -6,10 +6,13 @@
 
 {% block content %}
 
+<a href="{{ url_for('invoicing.payment') }}" class="various fancybox.ajax btn btn-default">Receive Payment</a>
+
 <table class="table table-striped">
 
 	<tr>
 		<th>Invoice Created Date</th>
+		<th>Customer</th>
 		<th>Milestones</th>
 		<th>Amount</th>
 		<th></th>
@@ -18,14 +21,26 @@
 {% for i in invoices %}
 
 	<tr>
-		<td>{{ i.date_created }}</td>
+		<td>{{ i.date_created|date_format }}</td>
+		<td>{{ i.customer.name }}</td>
 		<td>{{ i.milestones.all()|length }}</td>
-		<td>${{ i.billable_cost() }}</td>
-		<td><a href="{{ url_for("invoicing.invoice", invoice_id=i.id) }}" class="btn btn-default">view</a></td>
+		<td>${{ "%.2f" % i.billable_cost() }}</td>
+		<td>
+			<a href="{{ url_for("invoicing.invoice", invoice_id=i.id) }}" class="btn btn-default">{% if i.state == 'working' %}edit{% else %}view{% endif %}</a>			
+			<button class="btn btn-default" id="update_invoice" data-invoiceid="{{ i.id }}" data-action="revert" {% if i.state == 'working' %}disabled{% endif %}>revert</button>
+		</td>
 	</tr>
 
 {% endfor %}
 
 </table>
+
+{% endblock %}
+
+{% block extra_js %}
+	
+	<script type="text/javascript">
+		{% include 'static/js/invoicing/invoices.js' %}
+	</script>
 
 {% endblock %}

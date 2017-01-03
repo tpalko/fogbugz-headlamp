@@ -9,7 +9,7 @@ from datetime import datetime
 import traceback
 import ConfigParser
 from .models import Project, Milestone, Case, FogbugzUser, FogbugzUserCase, Category, Deliverable, Invoice, Company, Customer
-from .forms import DeliverableForm
+from .forms import DeliverableForm, PaymentForm
 from webapp import app, logger
 from sqlalchemy import text
 
@@ -88,7 +88,7 @@ def refresh():
 						warn_and_flash("Frozen milestone %s now ends in the future" % existing_milestone.sfixfor)
 				else:
 					if existing_milestone.sfixfor != sfixfor or existing_milestone.dt != enddate or existing_milestone.dtstart != startdate:
-						logger.info("Milestone %s metadata has changed - updating" %(existing_milestone.sproject))
+						logger.info("Milestone %s metadata has changed - updating" %(existing_milestone.project.sproject))
 						existing_milestone.update(ixfixfor=int(f.ixfixfor.string), sfixfor=sfixfor, ixproject=int(f.ixproject.string), dt=enddate, dtstart=startdate)
 						g.db.add(existing_milestone)
 						g.db.commit()
@@ -115,13 +115,20 @@ def refresh():
 
 			#logger.debug("Case %s status %s" %(c.ixbug.string, c.sstatus.string))
 
-			if c.sstatus.string.find("Resolved") < 0 and c.sstatus.string.find("Closed") < 0:
-				#logger.debug("Case %s not resolved or closed - skipping" %(c.ixbug.string))
-				continue
-
 			fb_case = g.db.query(Case).filter(Case.ixbug==int(c.ixbug.string)).first()
 			milestone = g.db.query(Milestone).filter(Milestone.ixfixfor==int(c.ixfixfor.string)).first()
 
+			if c.sstatus.string.find("Resolved") < 0 and c.sstatus.string.find("Closed") < 0:
+				logger.info("Case %s not resolved or closed - skipping" %(c.ixbug.string))
+				if fb_case:
+					logger.info("Case %s imported previously, but has since been reopened" % c.ixbug.string)
+					if milestone and milestone.bfrozen:
+						warn_and_flash("Case %s reopened on frozen milestone!" % c.ixbug.string)
+					else:
+						g.db.delete(fb_case)
+						g.db.commit()
+				continue
+			
 			if not milestone:
 				warn_and_flash("No milestone found for case %s, cannot bill - skipping" % c.ixbug.string)
 				continue
@@ -313,7 +320,9 @@ def case_action(case_id):
 		case.fogbugzusercases[0].bcomped = False
 		g.db.commit()
 	elif request.form["action"].find("deliverable_") == 0:
-		case.deliverable_id = request.form["action"].split("_")[1]
+		deliverable_id = request.form["action"].split("_")[1]
+		# - toggle
+		case.deliverable_id = None if case.deliverable_id and int(case.deliverable_id) == int(deliverable_id) else deliverable_id
 		g.db.commit()
 
 	return render_template('invoicing/_milestone_detail_case_row.html', case=case, categories=categories, open_deliverables=open_deliverables)
@@ -367,21 +376,29 @@ def case_category_create(case_id):
 def invoice(invoice_id=None):
 
 	milestones = []
+	unpaid_deliverables = []
+	refund_deliverables = []
+
 	invoice = None
 
 	if invoice_id:
 		invoice = g.db.query(Invoice).get(invoice_id)
 		milestones = invoice.milestones.all()
+		unpaid_deliverables = g.db.query(Deliverable).filter(Deliverable.invoice==invoice)
+		refund_deliverables = g.db.query(Deliverable).filter(Deliverable.invoice!=None, Deliverable.refund_invoice==invoice)
 	else:
-		milestones = g.db.query(Milestone).filter(Milestone.bfrozen==True).order_by(Milestone.ixproject, Milestone.dt)
-	
-	total = sum([ float(m.billable_cost()) for m in milestones ])
+		milestones = g.db.query(Milestone).filter(Milestone.bfrozen==True, Milestone.invoice==None).order_by(Milestone.ixproject, Milestone.dt)
+		unpaid_deliverables = g.db.query(Deliverable).filter(Deliverable.invoice==None)
+		refund_deliverables = g.db.query(Deliverable).filter(Deliverable.invoice!=None, Deliverable.refund_invoice==None)
 
-	return render_template('invoicing/invoice.html', invoice=invoice, milestones=milestones, total=total, print_view=g.print_view)
+	total = sum([ float(m.billable_cost()) for m in milestones ]) + sum([ d.festimate for d in unpaid_deliverables]) - sum([ d.frefunded for d in refund_deliverables])
+	deliverable_total = sum([ d.festimate for d in unpaid_deliverables]) - sum([ d.frefunded for d in refund_deliverables])
 
-@invoicing.route('/invoice', methods=['POST'])
+	return render_template('invoicing/invoice.html', invoice=invoice, milestones=milestones, unpaid_deliverables=unpaid_deliverables, refund_deliverables=refund_deliverables, total=total, deliverable_total=deliverable_total, print_view=g.print_view)
+
+@invoicing.route('/invoice', methods=['PUT'])
 @login_required
-def invoice_create():
+def invoice_finalize():
 	
 	success = False
 	message = ""
@@ -389,29 +406,61 @@ def invoice_create():
 
 	try:
 
-		milestones = g.db.query(Milestone).filter(Milestone.bfrozen==True, Milestone.binvoiced==False)
+		company = g.db.query(Company).first()
+		customer = g.db.query(Customer).first()
 
-		if len(list(milestones)) > 0:
+		invoice_id = None
 
-			company = g.db.query(Company).first()
-			customer = g.db.query(Customer).first()
+		if 'invoice_id' in request.form:
+			invoice_id = request.form['invoice_id']
 
-			invoice = Invoice()
-			invoice.company_id = company.id
-			invoice.customer_id = customer.id
+		if invoice_id:
 
-			g.db.add(invoice)
-			g.db.commit()
+			invoice = g.db.query(Invoice).get(invoice_id)
+			invoice.state = 'final'
 
-			for m in milestones:
+			for m in invoice.milestones:
 				m.finvoicedamount = float(m.billable_cost())
-				m.binvoiced = True
-				m.invoice_id = invoice.id
+				#m.binvoiced = True
+				#m.invoice_id = invoice.id
 
 			g.db.commit()
 
-			success = True
-			flash("Invoice #%s created" % invoice.id)
+			flash("Invoice #%s finalized" % invoice.id)
+
+		else:
+
+			milestones = g.db.query(Milestone).filter(Milestone.bfrozen==True, Milestone.invoice==None)
+			unpaid_deliverables = g.db.query(Deliverable).filter(Deliverable.invoice==None)
+			refund_deliverables = g.db.query(Deliverable).filter(Deliverable.invoice!=None, Deliverable.refund_invoice==None)
+
+			if len(list(milestones)) > 0 or len(list(unpaid_deliverables)) > 0 or len(list(refund_deliverables)) > 0:
+
+				invoice = Invoice()				
+				invoice.company_id = company.id
+				invoice.customer_id = customer.id
+				invoice.state = 'final'
+
+				g.db.add(invoice)
+
+				g.db.commit()
+
+				for m in milestones:
+					m.finvoicedamount = float(m.billable_cost())
+					#m.binvoiced = True
+					m.invoice_id = invoice.id
+
+				for d in unpaid_deliverables:
+					d.invoice_id = invoice.id
+
+				for d in refund_deliverables:
+					d.refund_invoice_id = invoice.id
+
+				g.db.commit()
+
+				flash("Invoice #%s created" % invoice.id)
+
+		success = True
 
 	except:
 		logger.error(str(sys.exc_info()[0]))
@@ -422,10 +471,29 @@ def invoice_create():
 
 	return json.jsonify({'success': success, 'message': message, 'result': result})
 
+@invoicing.route('/invoice/<invoice_id>', methods=['PUT'])
+@login_required
+def invoice_update(invoice_id):
+
+	action = request.form['action']
+
+	if action == 'revert':
+
+		invoice = g.db.query(Invoice).get(invoice_id)
+		
+		#for milestone in invoice.milestones:
+		#	milestone.binvoiced = False
+
+		invoice.state = 'working'
+
+		g.db.commit()
+
+	return redirect(url_for("invoicing.invoices")), 303
+
 @invoicing.route('/invoices', methods=['GET'])
 @login_required
 def invoices():
-	invoices = g.db.query(Invoice).all()
+	invoices = g.db.query(Invoice).order_by(Invoice.date_created).all()
 	return render_template('invoicing/invoices.html', invoices=invoices)
 
 @invoicing.route('/deliverables', methods=['GET'])
@@ -436,24 +504,81 @@ def deliverables():
 
 	return render_template('invoicing/deliverables.html', deliverables=deliverables)
 
+@invoicing.route('/deliverable/<deliverable_id>/refund', methods=['PUT'])
+@login_required
+def deliverable_refund(deliverable_id):
+
+	success = False
+	message = ""
+	result = {}
+
+	deliverable = g.db.query(Deliverable).get(deliverable_id)
+
+	if deliverable.frefunded == 0:
+		deliverable.frefunded = deliverable.balance()		
+		g.db.commit()
+
+	success = True
+
+	return json.jsonify({'success': success, 'message': message, 'result': result})
+
 @invoicing.route('/deliverable/', methods=['GET', 'POST'])
 @invoicing.route('/deliverable/<deliverable_id>', methods=['GET', 'POST'])
 @login_required
 def deliverable_form(deliverable_id=None):
+
+	'''
+	0a - estimate not invoiced
+	0b - estimate assigned to a working invoice
+		- any detail may be changed except the assignment of a refund invoice
+	1 - estimate assigned to a finalized invoice
+		- no detail may be changed
+		- remainder may be refunded
+		- no case may be assigned
+	2a - partially refunded, refund not invoiced
+	2b - partially refunded, refund assigned to a working invoice
+		- the only change allowed is the unassignment, assignment, or change of the refund invoice
+	3 - partially refunded, refund assigned to a finalized invoice
+		- no detail may be changed
+	'''
 
 	deliverable = None
 
 	if deliverable_id:
 		deliverable = g.db.query(Deliverable).get(deliverable_id)
 
+	show_refund_invoices = False
+
+	if deliverable:
+		if (deliverable.invoice and deliverable.invoice.state == 'final') \
+			or (deliverable.frefunded != 0 and deliverable.refund_invoice and deliverable.refund_invoice.state == 'final'):
+			# we cannot change any details
+			flash("This deliverable is assigned to a finalized invoice - no changes may be made.")
+			return redirect('invoicing.deliverables')
+		if deliverable.frefunded != 0 and (not deliverable.refund_invoice or deliverable.refund_invoice.state == 'working'):
+			show_refund_invoices = True
+
 	form = DeliverableForm(request.form, deliverable)
+	working_invoices = [ (0, "Default Working Invoice") ] + [ (i.id, "%s: %s" %(i.customer.name, i.date_created)) for i in g.db.query(Invoice).filter(Invoice.state=='working') ]
+	form.invoice_id.choices = working_invoices
+	form.refund_invoice_id.choices = working_invoices
 
 	if form.validate_on_submit():
 
 		if deliverable:
 			form.populate_obj(deliverable)
+			if deliverable.invoice_id == 0:
+				deliverable.invoice_id = None
+			if deliverable.refund_invoice_id == 0:
+				deliverable.refund_invoice_id = None
 		else:
 			deliverable = Deliverable(name=form.name.data, festimate=form.festimate.data)
+			
+			if form.invoice_id.data > 0:
+				deliverable.invoice_id = form.invoice_id.data
+			if form.refund_invoice_id.data > 0:
+				deliverable.refund_invoice_id = form.refund_invoice_id.data
+
 			g.db.add(deliverable)
 
 		g.db.commit()
@@ -461,24 +586,51 @@ def deliverable_form(deliverable_id=None):
 		flash("The deliverable entry was created or updated")
 		return redirect(url_for("invoicing.deliverables"))
 
-	return render_template("invoicing/deliverable_form.html", form=form)
+	elif form.errors:
+
+		flash("The submission was invalid. Please try again.")
+
+	if not show_refund_invoices and deliverable and not deliverable.refund_invoice_id:
+		form.refund_invoice_id.data = 0
+
+	return render_template("invoicing/deliverable_form.html", deliverable=deliverable, form=form, show_refund_invoices=show_refund_invoices)
+
+@invoicing.route('/payment', methods=['GET', 'POST'])
+@login_required
+def payment():
+
+	payment = None
+	form = PaymentForm(request.form)
+
+	if form.validate_on_submit():
+
+		form.populate_obj(payment)
+		g.db.add(payment)
+		g.db.commit()
+
+		flash("The payment has been filed")
+		return redirect(url_for('invoicing.invoices'))
+
+	return render_template("invoicing/_payment.html", form=form)
 
 @invoicing.route('/', methods=['GET', 'POST'])
 @login_required
 def milestones():
 
+	'''
 	milestone_filter = None
 	person_filter = None
 	project_filter = None
 	start_milestone = None
 	end_milestone = None
 	single_milestone = False
+	'''
 
 	try:
 
-		projects = g.db.query(Project).all()
+		#projects = g.db.query(Project).all()
 		milestones = g.db.query(Milestone).order_by(Milestone.dt.desc()).all()
-		people = g.db.query(FogbugzUser).all()
+		#people = g.db.query(FogbugzUser).all()
 
 		#project_names = {}
 		
@@ -486,13 +638,15 @@ def milestones():
 		#	project_names[p.ixproject.string] = parse_cdata(p.sproject.string)
 
 		
-
+		'''
 		if request.method == "POST":
 			milestone_filter = request.form['milestone_filter'] if request.form['milestone_filter'] != "" else ""
 			person_filter = request.form['person_filter'] if request.form['person_filter'] != "" else None
 			project_filter = int(request.form['project_filter']) if request.form['project_filter'] != "" else None
 			start_milestone = request.form['start_milestone'] if request.form['start_milestone'] != "" else None
 			end_milestone = request.form['end_milestone'] if request.form['end_milestone'] != "" else None
+		'''
+
 		#single_milestone = bool(request.form['single_milestone']) if 'single_milestone' in request.form else False
 
 		#fixfors = sorted(fixfors, key=lambda fixfor: fixfor.dt, reverse=True)
@@ -577,16 +731,16 @@ def milestones():
 		return render_template('error.html', error=sys.exc_info()[2])
 
 	return render_template('invoicing/milestones.html', 
-		projects=projects,
-		milestones=milestones,
-		people=people, 
+		#projects=projects,
+		milestones=milestones
+		#people=people, 
 		#project_names=project_names,
-	   	milestone_filter=milestone_filter,
-	   	person_filter=person_filter, 
-	   	project_filter=project_filter,
-	   	start_milestone=start_milestone, 
-	   	end_milestone=end_milestone,
-	   	single_milestone=single_milestone
+	   	#milestone_filter=milestone_filter,
+	   	#person_filter=person_filter, 
+	   	#project_filter=project_filter,
+	   	#start_milestone=start_milestone, 
+	   	#end_milestone=end_milestone,
+	   	#single_milestone=single_milestone
 	   	#description=description, 
 	   	#fixfors=fixfors, 
 	   	#milestones_filter=milestones_filter, 
