@@ -24,6 +24,9 @@ class FogBugzClient:
 		return my_fixfor[0] if any(my_fixfor) else None
 	'''
 
+	def test_connection(self):
+		return self.fb
+
 	def get_person(self, ixperson):
 		if ixperson is None or int(ixperson) == 0:
 			return None

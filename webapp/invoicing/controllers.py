@@ -45,6 +45,9 @@ def refresh():
 
 		fbc = FogBugzClient()
 
+		if not fbc.test_connection():
+			raise Exception("Failed to get a FogBugz client going")
+
 		now = datetime.now()
 
 		projectlist = fbc.get_projects()
