@@ -1,15 +1,18 @@
 {% extends "base.html" %}
 
 {% block content %}
-
+	
+	{#
 	<div class="row">
 		<div class="col-md-12">
-			{#
+			
 			<h3>{{description}}: {% if milestone_filter %}"{{milestone_filter}}":{% endif %} ${{total_cost|round(2, 'floor')}} / {{total_hours|round(2, 'floor')}} hours</h3>			
-			#}
+			
 		</div>
 	</div>
+	#}
 
+	{# 
 	<div class="row">
 		<div class="col-md-12">
 
@@ -67,6 +70,7 @@
 			</form>
 		</div>
 	</div>
+	#}
 
 	<div class="row" style="margin: 1em 0em;">
 		<div class="col-md-12">
@@ -89,6 +93,7 @@
 					<th nowrap># Cases</th>
 					<th>Cost</th>
 					<th>Billable</th>
+					<th>Invoice</th>
 					<th></th>
 					<th></th>
 				</tr>
@@ -101,11 +106,12 @@
 					<td nowrap>{{ milestone.dtstart|date_format }}</td>
 					<td nowrap>{{ milestone.dt|date_format }}</td>
 					<td>{{ milestone.cases.all()|length }}</td>
-					<td>${{ milestone.cost() }}</td>
-					<td>${{ milestone.billable_cost() }}</td>
+					<td>${{ "%.2f" % milestone.cost() }}</td>
+					<td>${{ "%.2f" % milestone.billable_cost() }}</td>
+					<td>{% if milestone.invoice %} {{ milestone.invoice.customer.name }}: {{ milestone.invoice.date_created }} <a href="{{ url_for('invoicing.invoice', invoice_id=milestone.invoice_id) }}">view</a> {% endif %}</td>
 					<td>
 						<div class="btn-group" role="group">
-							<a href="{{ url_for('invoicing.milestone_detail', milestone_id=milestone.id) }}" class="btn btn-default">See Detail</a>							
+							<a href="{{ url_for('invoicing.milestone_detail', milestone_id=milestone.id) }}" class="btn btn-default">See Detail</a>	
 						</div>
 					</td>
 					<td>

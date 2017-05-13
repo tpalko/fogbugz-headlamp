@@ -56,7 +56,7 @@ $(document).on('change', "select[name^='category_']", function(e){
 		dataType: "json",
 		success: function(data){			
 
-			$(select).closest("tr").find(".category_label span").html(data.category_name);
+			$(select).closest("tr").find(".category_label span.category_name").html(data.category_name);
 
 			if(data.category_id != null){
 

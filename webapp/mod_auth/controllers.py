@@ -1,7 +1,6 @@
 from flask import Blueprint, request, render_template, flash, g, session, redirect, url_for, abort
 from flask.ext.login import login_user, login_required, current_user, logout_user
 from werkzeug import check_password_hash, generate_password_hash
-from webapp.database import db_session
 from webapp.mod_auth.forms import LoginForm, RegisterForm
 from webapp.mod_auth.models import User, LoginUser
 from webapp import logger

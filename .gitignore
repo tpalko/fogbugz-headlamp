@@ -2,3 +2,4 @@
 instance/
 env/
 .fuse_hidden*
+.env

@@ -14,7 +14,7 @@ app = Flask(__name__, instance_relative_config=True)
 
 # Configurations
 app.config.from_object('config_default')
-app.config.from_pyfile('config.py')
+app.config.from_pyfile('config_%s.py' % os.environ['HEADLMP_ENVIRONMENT'])
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import scoped_session, sessionmaker

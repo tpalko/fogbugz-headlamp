@@ -4,10 +4,15 @@
 	
 	<div class="row">
 		<div class="col-md-12">
+			{% if deliverable %}
+				<h2>Editing Deliverable "{{ deliverable.name }}"</h2>
+			{% endif %}
 			<form method="POST" accept-charset="UTF-8" role="form">
-				{{ form.csrf_token }}
-				{{ render_field(form.name, placeholder="Name", autofocus="") }}
-				{{ render_field(form.festimate, placeholder="Amount") }}
+				{{ form.csrf_token }}				
+				{{ render_field(form.name, placeholder="Name", autofocus="", hidden=show_refund_invoices) }}
+				{{ render_field(form.festimate, placeholder="Amount", hidden=show_refund_invoices) }}
+				{{ render_field(form.invoice_id, hidden=show_refund_invoices) }}			
+				{{ render_field(form.refund_invoice_id, hidden=not show_refund_invoices) }}
 				<button type="submit" name="submit">Save</button>
 			</form> 
 		</div>

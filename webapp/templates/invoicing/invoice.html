@@ -4,11 +4,13 @@
 
 <style type="text/css">
 
-	.category, .case {
+	.category, .case, .deliverable {
 		font-size: 0.8em;
 	}
 
-	.category > div:nth-child(1), .case > div:nth-child(1) {
+	.category > div:nth-child(1), 
+	.case > div:nth-child(1),
+	.deliverable > div:nth-child(1) {
 		border-bottom: 1px dashed black;
 	}
 
@@ -24,7 +26,7 @@
 		font-size: 1.2em;
 	}
 
-	.subtotal, .total, .row.milestone {
+	.subtotal, .total, .row.milestone, .row.deliverable {
 		margin-top: 1em;
 		margin-bottom: 1em;
 	}
@@ -35,11 +37,11 @@
 
 {% block content %}
 
-{% if not invoice %}
+{% if not invoice or invoice.state == 'working' %}
 <div class="row">
 	<div class="col-xs-6">
 		<div class="btn-group" role="group">
-			<button class="btn btn-default" id="create_invoice">Create Invoice</button>
+			<button class="btn btn-default" id="finalize_invoice" {% if invoice %}data-invoiceid="{{ invoice.id }}"{% endif %}>Finalize Invoice</button>
 		</div>
 	</div>
 </div>
@@ -47,7 +49,7 @@
 
 {% if invoice %}
 
-	{% if not print_view %}
+	{% if not print_view and invoice.state == 'final' %}
 	<div class="row">
 		<div class="col-xs-6">
 			<a href="?print=True" target="_blank">print view</a>
@@ -64,7 +66,7 @@
 		<div class="col-xs-6 text-right">
 			<h2>INVOICE</h2>
 			Statement Date: {{ invoice.date_created|date_format }}
-			<h4 class="cost">Amount Due: ${{ total }}</h4>
+			<h4 class="cost">Amount Due: ${{ "%.2f" % total }}</h4>
 		</div>
 	</div>
 	<div class="row" style="margin-top: 1em;">
@@ -85,7 +87,7 @@
 	<div class="row milestone">
 		<div class="col-xs-12">
 			<h5>
-				{{ milestone.sfixfor }} <small>{{ milestone.project.sproject }} / {{ milestone.dtstart|date_format }} to {{ milestone.dt|date_format }}</small>
+				{{ milestone.sfixfor }} <small>{{ milestone.project.sproject }} / {{ milestone.dtstart|date_format }} to {{ milestone.dt|date_format }} {% if not print_view and (not invoice or invoice.state == 'working') %}<a href="{{ url_for('invoicing.milestone_detail', milestone_id=milestone.id) }}">edit milestone</a>{% endif %}</small>
 			</h5>
 		</div>
 	</div>
@@ -102,14 +104,14 @@
 					{% endtrans %} {{ category.cases.all()|ticket|join(", ")|safe }}
 				</span>
 			</div>			
-			<div class="col-xs-2 text-right cost">${{ category.cost() }}</div>
+			<div class="col-xs-2 text-right cost">${{ "%.2f" % category.cost() }}</div>
 		</div>
 	{% endfor %}
 
 	{% for case in milestone.uncategorized_cases(include_zero_cost=False) %}	
 		<div class="row case">
 			<div class="col-xs-8">{{ case.stitle }} (case {{ case.ticket_url()|safe }})</div>
-			<div class="col-xs-2 text-right cost">${{ case.fogbugzusercases[0].cost() }}</div>
+			<div class="col-xs-2 text-right cost">${{ "%.2f" % case.cost() }}</div>
 		</div>
 	{% endfor %}
 
@@ -125,7 +127,7 @@
 	{% for case in milestone.comped_cases() %}
 		<div class="row case">
 			<div class="col-xs-7 col-xs-offset-1">{{ case.stitle }} (case {{ case.ixbug }})</div>
-			<div class="col-xs-2 text-right cost">( ${{ case.fogbugzusercases[0].cost() }} )</div>
+			<div class="col-xs-2 text-right cost">( ${{ "%.2f" % case.cost() }} )</div>
 		</div>
 	{% endfor %}
 
@@ -142,25 +144,57 @@
 					{% endtrans %} {{ deliverable.cases_in_milestone(milestone)|ticket|join(", ")|safe }}
 				</span>
 			</div>
-			<div class="col-xs-2 text-right cost">( ${{ deliverable.cost_in_milestone(milestone) }} )</div>
+			<div class="col-xs-2 text-right cost">( ${{ "%.2f" % deliverable.cost_in_milestone(milestone) }} )</div>
 		</div>
 	{% endfor %}
 
 	<div class="row subtotal">
 		
 		<div class="col-xs-12 text-right cost">
-			${{ milestone.billable_cost() }}
+			${{ "%.2f" % milestone.billable_cost() }}
 		</div>
 	</div>
 
 {% endfor %}
+
+{% if unpaid_deliverables.count() > 0 or refund_deliverables.count() > 0 %}<h5>Deliverables</h5>{% endif %}
+
+{% if unpaid_deliverables.count() > 0 %}<h4><small>Deliverable Estimates</small></h4>{% endif %}
+{% for unpaid_deliverable in unpaid_deliverables %}
+	
+	<div class="row deliverable">
+		<div class="col-xs-7 col-xs-offset-1">{{ unpaid_deliverable.name }}</div>
+		<div class="col-xs-2 text-right cost">${{ unpaid_deliverable.festimate }}</div>
+	</div>
+
+{% endfor %}
+
+{% if refund_deliverables.count() > 0 %}<h4><small>Deliverable Refunds</small></h4>{% endif %}
+{% for refund_deliverable in refund_deliverables %}
+	
+	<div class="row deliverable">
+		<div class="col-xs-7 col-xs-offset-1">{{ refund_deliverable.name }}</div>
+		<div class="col-xs-2 text-right cost">( ${{ refund_deliverable.frefunded }} )</div>
+	</div>
+
+{% endfor %}
+
+{% if unpaid_deliverables.count() > 0 or refund_deliverables.count() > 0 %}
+<div class="row subtotal">
+		
+	<div class="col-xs-12 text-right cost">
+		{% if deliverable_total < 0 %}( {% endif %}${{ "%.2f" % deliverable_total|abs }}{% if deliverable_total < 0 %} ){% endif %}
+	</div>
+
+</div>
+{% endif %}
 
 <div class="row total">
 	<div class="col-xs-10">
 		<h4>Total Due</h4>
 	</div>
 	<div class="col-xs-2 text-right">
-		<h4 class="cost">${{ total }}</h4>
+		<h4 class="cost">${{ "%.2f" % total }}</h4>
 	</div>
 </div>
 
