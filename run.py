@@ -11,8 +11,10 @@ from webapp import app
 from flask.ext.script import Manager, Server
 from flask.ext.migrate import MigrateCommand
 
-print "Starting server at one-twenty-seven-oh-oh-one:eighty-eighty.."
-server = Server(host='127.0.0.1', port=8080)
+host = '127.0.0.1'
+port = 8080
+print "Starting server at %s:%s" % (host, port)
+server = Server(host=host, port=port)
 
 manager = Manager(app)
 manager.add_command('db', MigrateCommand)
