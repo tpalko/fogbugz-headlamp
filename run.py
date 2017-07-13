@@ -4,7 +4,7 @@ with open('.env', 'rb') as envfile:
 	lines = envfile.readlines()
 	for l in lines:
 		envvar, value = l.split('=')
-		os.environ[envvar] = value
+		os.environ[envvar] = value.replace('\n', '')
 		print "loaded %s=%s" %(envvar, value)
 
 from webapp import app
