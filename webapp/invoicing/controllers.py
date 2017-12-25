@@ -12,6 +12,8 @@ from .models import Project, Milestone, Case, FogbugzUser, FogbugzUserCase, Cate
 from .forms import DeliverableForm, PaymentForm
 from webapp import app, logger
 from sqlalchemy import text
+from webapp.dao.project import ProjectDAO
+from webapp.dao.milestone import MilestoneDAO
 
 invoicing = Blueprint('invoicing', __name__, url_prefix='/invoicing')
 
@@ -54,7 +56,7 @@ def refresh():
 
 		for p in projectlist.findAll("project"):
 
-			existing_project = g.db.query(Project).filter(Project.ixproject==int(p.ixproject.string)).first()
+			existing_project = ProjectDAO.get(int(p.ixproject.string))
 
 			if existing_project:
 				
@@ -390,7 +392,7 @@ def invoice(invoice_id=None):
 		unpaid_deliverables = g.db.query(Deliverable).filter(Deliverable.invoice==invoice)
 		refund_deliverables = g.db.query(Deliverable).filter(Deliverable.invoice!=None, Deliverable.refund_invoice==invoice)
 	else:
-		milestones = g.db.query(Milestone).filter(Milestone.bfrozen==True, Milestone.invoice==None).order_by(Milestone.ixproject, Milestone.dt)
+		milestones = MilestoneDAO.GetCurrentInvoiceMilestones()
 		unpaid_deliverables = g.db.query(Deliverable).filter(Deliverable.invoice==None)
 		refund_deliverables = g.db.query(Deliverable).filter(Deliverable.invoice!=None, Deliverable.refund_invoice==None)
 
