@@ -27,7 +27,14 @@
 		<td>${{ "%.2f" % i.billable_cost() }}</td>
 		<td>
 			<a href="{{ url_for("invoicing.invoice", invoice_id=i.id) }}" class="btn btn-default">{% if i.state == 'working' %}edit{% else %}view{% endif %}</a>			
-			<button class="btn btn-default" id="update_invoice" data-invoiceid="{{ i.id }}" data-action="revert" {% if i.state == 'working' %}disabled{% endif %}>revert</button>
+			<button 
+				class="btn btn-default" 
+				id="update_invoice" 
+				data-invoiceid="{{ i.id }}" 
+				data-action="revert" 
+				{% if i.state == 'working' %}disabled{% endif %}>
+					revert
+			</button>
 		</td>
 	</tr>
 

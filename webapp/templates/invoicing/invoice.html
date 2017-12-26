@@ -41,7 +41,12 @@
 <div class="row">
 	<div class="col-xs-6">
 		<div class="btn-group" role="group">
-			<button class="btn btn-default" id="finalize_invoice" {% if invoice %}data-invoiceid="{{ invoice.id }}"{% endif %}>Finalize Invoice</button>
+			<button 
+				class="btn btn-default" 
+				id="finalize_invoice" 
+				{% if invoice %}data-invoiceid="{{ invoice.id }}"{% endif %}>
+					Finalize Invoice
+			</button>
 		</div>
 	</div>
 </div>

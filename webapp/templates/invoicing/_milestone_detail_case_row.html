@@ -26,8 +26,8 @@
 	<td>
 		{{ case.fogbugzusercases[0].fhours }}
 	</td>
-	<td>
-		${{ case.fogbugzusercases[0].cost() }}
+	<td style='text-align: right;'>
+		${{ "%0.2f" % case.fogbugzusercases[0].cost() }}
 		{% if case.fogbugzusercases[0].bcomped %}<br /><span class="label label-warning text-uppercase">comped</span>{% endif %}	
 	</td>
 	<td>

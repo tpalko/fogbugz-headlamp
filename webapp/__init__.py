@@ -6,7 +6,7 @@ from flask.ext.migrate import Migrate
 from flask.ext.babel import Babel, format_datetime
 import logging
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=int(os.environ['LOG_LEVEL']))
 logger = logging.getLogger(__name__)
 
 # Define the WSGI application object
@@ -14,7 +14,7 @@ app = Flask(__name__, instance_relative_config=True)
 
 # Configurations
 app.config.from_object('config_default')
-app.config.from_pyfile('config_%s.py' % os.environ['HEADLMP_ENVIRONMENT'])
+app.config.from_pyfile('config_%s.py' % os.environ['HEADLMP_ENVIRONMENT'].replace('\n', ''))
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import scoped_session, sessionmaker

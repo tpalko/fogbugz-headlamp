@@ -11,7 +11,7 @@
 			From {{ milestone.dtstart }} to {{ milestone.dt }}
 		</h4>
 		<h4>
-			{{ milestone.cases.all()|length }} Cases / ${{ milestone.cost() }}
+			{{ milestone.cases.all()|length }} Cases / ${{ '%0.2f' % milestone.cost() }}
 		</h4>
 		
 		<div id="milestone_buttons_{{ milestone.id }}">
@@ -42,7 +42,7 @@
 					{{ mc.cases.all()|length }}
 				</td>
 				<td class="category_case_cost">
-					${{ mc.cost() }}
+					${{ "%0.2f" % mc.cost() }}
 				</td>
 			</tr>	
 		{% endfor %}

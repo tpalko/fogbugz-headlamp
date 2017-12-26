@@ -6,6 +6,7 @@
 
 		DATABASE_URL=[database connection string]
 		HEADLMP_ENVIRONMENT=[your environment name]
+		LOG_LEVEL=[numeric Logging.* (10, 20, 30, 40, 50)]
 
 2. Install pip requirements:
 

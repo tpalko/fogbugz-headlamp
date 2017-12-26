@@ -118,6 +118,7 @@ class Milestone(CustomBase):
 		return cases
 
 	def cost(self):
+		''' Case cost rollup '''
 
 		return sum([ c.cost() for c in self.cases ])
 		
@@ -152,6 +153,8 @@ class Case(CustomBase):
 		#self.hrsElapsedExtra = float(c.hrselapsedextra.string)
 
 	def cost(self):
+		''' Billable amount for a particular employee's time on this case '''
+		# -- TODO: we assume there is only one FBUC
 		return self.fogbugzusercases[0].cost()
 
 	def ticket_url(self):

@@ -206,7 +206,7 @@ def refresh():
 								sstatus=c.sstatus.string,
 								scategory=c.scategory.string, 
 								sticket=c.sticket.string, 
-								ixfixfor=int(fb_case.ixfixfor))
+								ixfixfor=int(c.ixfixfor.string))
 
 							if int(c.ixpersonresolvedby.string) > 0:
 								fb_case.update(ixpersonresolvedby=int(c.ixpersonresolvedby.string))
@@ -411,17 +411,22 @@ def invoice_finalize():
 
 	try:
 
+		# -- TODO: clearly, company and customer will not always be the first record..
 		company = g.db.query(Company).first()
 		customer = g.db.query(Customer).first()
 
+		# -- this is either the 'default working invoice', or..
 		invoice_id = None
+		invoice = None
 
+		# -- we could be editing a previously-finalized-then-reverted invoice
 		if 'invoice_id' in request.form:
 			invoice_id = request.form['invoice_id']
-
-		if invoice_id:
-
 			invoice = g.db.query(Invoice).get(invoice_id)
+
+		# -- reverting and re-finalizing only means setting state and snapshotting billable cost for each milestone
+		if invoice:
+
 			invoice.state = 'final'
 
 			for m in invoice.milestones:
@@ -435,6 +440,7 @@ def invoice_finalize():
 
 		else:
 
+			# -- saving the default working invoice (for the first time) is much more complicated
 			milestones = g.db.query(Milestone).filter(Milestone.bfrozen==True, Milestone.invoice==None)
 			unpaid_deliverables = g.db.query(Deliverable).filter(Deliverable.invoice==None)
 			refund_deliverables = g.db.query(Deliverable).filter(Deliverable.invoice!=None, Deliverable.refund_invoice==None)
@@ -467,6 +473,8 @@ def invoice_finalize():
 
 		success = True
 
+		redirect_url = url_for('invoicing.invoice', invoice_id=invoice.id)
+
 	except:
 		logger.error(str(sys.exc_info()[0]))
 		message = str(sys.exc_info()[1])
@@ -474,7 +482,7 @@ def invoice_finalize():
 		flash(message)
 		traceback.print_tb(sys.exc_info()[2])
 
-	return json.jsonify({'success': success, 'message': message, 'result': result})
+	return json.jsonify({'success': success, 'message': message, 'result': result, 'redirect_url': redirect_url})
 
 @invoicing.route('/invoice/<invoice_id>', methods=['PUT'])
 @login_required

@@ -10,8 +10,9 @@ $(document).on("click", "#finalize_invoice", function(e){
 		dataType: 'json',
 		success: function(data){
 
-			document.location = document.location;	
-			
+			if(data.success){
+				document.location = data.redirect_url;	
+			}			
 		},
 		error: function(data){
 
