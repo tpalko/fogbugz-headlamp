@@ -574,6 +574,7 @@ def deliverable_form(deliverable_id=None):
 			# we cannot change any details
 			flash("This deliverable is assigned to a finalized invoice - no changes may be made.")
 			return redirect('invoicing.deliverables')
+		# -- only show option to change the refund invoice if not finalized
 		if deliverable.frefunded != 0 and (not deliverable.refund_invoice or deliverable.refund_invoice.state == 'working'):
 			show_refund_invoices = True
 

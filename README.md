@@ -8,19 +8,19 @@
 		HEADLMP_ENVIRONMENT=[your environment name]
 		LOG_LEVEL=[numeric Logging.* (10, 20, 30, 40, 50)]
 
-2. Install pip requirements:
-
-		$ sudo pip install -r requirements.txt
-
 3. Create virtual environment:
 
 		$ source env/bin/activate
 
-3. Run the app
+4. Install pip requirements:
+
+		$ sudo pip install -r requirements.txt
+
+5. Run the app
 
 		(env) $ python run.py runserver
 	
-	`run.py runserver` will emulate `heroku local` (described below) in finding `.env` and loading this into `os.environ`, importing `app` from `/webapp`, creating a `flask.ext.script.Server` and `Manager` instance, and calling `run()` on the Manager instance. This excludes `/instance/config_*/py` configuration influence.
+	`run.py runserver` will emulate `heroku local` (described below) in finding `.env` and loading this into `os.environ`, importing `app` from `/webapp`, creating a `flask.ext.script.Server` and `Manager` instance, and calling `run()` on the Manager instance. This excludes `/instance/config_*.py` configuration influence.
 	
 	or 
 	
