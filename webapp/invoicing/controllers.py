@@ -273,9 +273,15 @@ def milestone_detail(milestone_id):
 		where c.ixfixfor = :ixfixfor \
 		order by c.ixpriority, fuc.fhours desc")).params(ixfixfor=milestone.ixfixfor).all()
 
+	milestones = MilestoneDAO.GetCurrentInvoiceMilestones()
+
+	if milestone.invoice:
+		milestones = MilestoneDAO.GetInvoiceMilestones(milestone.invoice_id)
+	
 	#milestone_cases = g.db.query(Case).filter(Case.ixfixfor==milestone.ixfixfor).order_by(Case.fogbugzusercases.fhours, Case.category_id.desc())
 
 	return render_template('invoicing/milestone_detail.html', 
+		milestones=milestones,
 		milestone=milestone, 
 		categories=categories, 
 		open_deliverables=open_deliverables,

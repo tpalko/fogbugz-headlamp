@@ -4,7 +4,7 @@
 
 <div class="row">
 
-	<div class="col-md-12">
+	<div class="col-md-8">
 
 		<h2>{{ milestone.sfixfor }} <small><span class="help-text">{{ milestone.project.sproject }}</span></small></h2>
 		<h4>
@@ -18,9 +18,39 @@
 			{% include 'invoicing/_milestone_status_and_buttons.html' %}
 		</div>
 
-		{% if milestone.invoice and milestone.invoice.state == 'working' %}
-		You are editing an invoiced milestone. <a href="{{ url_for('invoicing.invoice', invoice_id=milestone.invoice_id) }}">Return to working invoice</a>
+	</div>
+	<div class="col-md-4">
+		
+		{% if milestone.invoice_id %}
+			You are editing an invoiced milestone.
+			<br /><a href="{{ url_for('invoicing.invoice', invoice_id=milestone.invoice_id) }}">return to invoice view</a>
+			<p>
+				or select another milestone in this invoice:
+		{% else %}
+			You are editing a milestone in the "default working invoice". (milestone is frozen, as yet not-invoiced)
+			<br /><a href="{{ url_for('invoicing.invoice') }}">return to default working invoice</a>
+			<p>
+				or select another milestone in the default working invoice:
 		{% endif %}
+
+		{% if milestones %}		
+		<form method="GET" action="{{ url_for('invoicing.milestone_detail', milestone_id=0) }}">
+			<select onchange="document.location = $(this).closest('form').attr('action').replace(/0/, this.value);">
+				{% for m in milestones %}
+					<option value="{{m.id}}" {% if m.id == milestone.id %}selected{% endif %}>{{ m.sfixfor }} - ${{ '%0.2f' % m.cost() }}</option>
+				{% endfor %}
+			</select>
+		</form>
+		{% endif %}
+		</p>
+		
+		
+	</div>
+
+</div>
+
+<div class="row">
+	<div class="col-md-12">
 
 		<form method="post" action="{{ url_for('invoicing.category_create', milestone_id=milestone.id) }}">
 
