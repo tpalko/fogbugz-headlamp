@@ -394,7 +394,7 @@ def invoice(invoice_id=None):
 
 	if invoice_id:
 		invoice = g.db.query(Invoice).get(invoice_id)
-		milestones = invoice.milestones.all()
+		milestones = g.db.query(Milestone).filter(Milestone.invoice==invoice).order_by(Milestone.dt)
 		unpaid_deliverables = g.db.query(Deliverable).filter(Deliverable.invoice==invoice)
 		refund_deliverables = g.db.query(Deliverable).filter(Deliverable.invoice!=None, Deliverable.refund_invoice==invoice)
 	else:
