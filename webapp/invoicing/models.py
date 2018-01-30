@@ -2,6 +2,7 @@ from sqlalchemy import Column, func, String, SmallInteger, Integer, DateTime, Bo
 from sqlalchemy.schema import Table, ForeignKey
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql.expression import text
+from webapp import app
 from webapp.models import CustomBase
 from flask import g
 
@@ -159,7 +160,7 @@ class Case(CustomBase):
 
 	def ticket_url(self):
 		if not g.print_view:
-			return "<a href='https://palkosoftware.fogbugz.com/default.asp?%s' target='_blank' title=\"%s\">%s</a>" %(self.sticket, self.stitle, self.ixbug)
+			return "<a href='%s%s?%s' target='_blank' title=\"%s\">%s</a>" %(app.config['FOGBUGZ_URL'], app.config['CASE_ENDPOINT'], self.sticket, self.stitle, self.ixbug)
 		else:
 			return "%s" % self.ixbug
 
@@ -196,8 +197,11 @@ class FogbugzUserCase(CustomBase):
 	def cost(self):
 		rate = self.frate_override if self.frate_override > 0 else self.fogbugzuser.frate
 		hours = self.fhours_override if self.fhours_override > 0 else self.fhours
+		cost = hours*rate
+		rounded_cost = float("%.2f" % (cost))
 
-		return (hours*rate)
+		#app.logger.info(cost - rounded_cost)
+		return rounded_cost
 
 class Category(CustomBase):
 
@@ -232,20 +236,28 @@ class Deliverable(CustomBase):
 		self.festimate = festimate
 
 	def editable(self):
-		return (not self.invoice or not self.invoice.state == 'final') and (not self.refund_invoice or not self.refund_invoice.state == 'final')
+		return (not self.invoice or not self.invoice.state == 'final') \
+			and (not self.refund_invoice or not self.refund_invoice.state == 'final')
 
 	def refundable(self):
 		return self.invoice and self.invoice.state == 'final' and self.frefunded == 0 and self.balance() != 0
 
 	def balance(self):
 		b = self.festimate - self.frefunded - sum([ c.cost() for c in self.cases if not c.fogbugzusercases[0].bcomped ])
-		b = 0 if abs(b) < 0.01 else b
+		# -- sometimes a fraction of a cent will keep the balance open
+		# -- actually with the rounded_cost fix in FogbugzUserCase.cost() this may no longer be an issue
+		if abs(b) < 0.01:
+			app.logger.warn('Deliverable.balance() reports a value less than a penny - trunced to zero')
+			b = 0
+
 		return b
 
 	def cases_in_milestone(self, milestone):
+		''' The intersection of the deliverable's cases and the given milestone's cases '''
 		return [ c for c in self.cases if c in milestone.cases ]
 
 	def cost_in_milestone(self, milestone):
+		''' Billable amount of the intersection of the deliverable's cases and the given milestone's cases '''
 		return sum([ c.cost() for c in self.cases if c in milestone.cases ])
 
 class Invoice(CustomBase):

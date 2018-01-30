@@ -14,6 +14,7 @@ FOGBUGZ_PASSWORD="secret"
 # - comma-delimited names and billing rates (names as found in fogbugz)
 BILLING_NAMES=""
 BILLING_RATES=""
+CASE_ENDPOINT="/default.asp"
 
 user="sample"
 password="secret"
