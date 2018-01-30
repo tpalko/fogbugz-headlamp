@@ -153,6 +153,9 @@ class Case(CustomBase):
 		#self.hrsElapsed = float(c.hrselapsed.string)
 		#self.hrsElapsedExtra = float(c.hrselapsedextra.string)
 
+	def billable(self):
+		return self.fogbugzusercases[0].fhours > 0
+
 	def cost(self):
 		''' Billable amount for a particular employee's time on this case '''
 		# -- TODO: we assume there is only one FBUC

@@ -1,4 +1,4 @@
-<tr class="{% if case.fogbugzusercases[0].fhours == 0 %}unbillable{% endif %}">
+<tr class="{% if not case.billable() %}unbillable{% endif %}">
 	<td>
 		{{ case.stitle }}
 	</td>
@@ -7,7 +7,7 @@
 		<span class="label label-default text-uppercase deliverable_name">{{ case.deliverable.name }}</span>
 	</td>
 	<td>
-		<select name="category_{{ case.id }}">
+		<select name="category_{{ case.id }}" {% if not case.billable() %}disabled{% endif %}>
 			<option value="">- none -</option>
 			{% for cat in categories %}														
 				<option value="{{ cat.id }}" {% if case.category.name == cat.name %}selected{% endif %}>{{ cat.name }}</option>
@@ -31,7 +31,7 @@
 		{% if case.fogbugzusercases[0].bcomped %}<br /><span class="label label-warning text-uppercase">comped</span>{% endif %}	
 	</td>
 	<td>
-		<select name="action_{{ case.id }}">
+		<select name="action_{{ case.id }}" {% if not case.billable() %}disabled{% endif %}>
 			<option value="">- Choose Action -</option>
 			<option value="comp">Comp</option>
 			<option value="uncomp">Uncomp</option>
