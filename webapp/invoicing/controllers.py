@@ -14,6 +14,7 @@ from webapp import app, logger
 from sqlalchemy import text
 from webapp.dao.project import ProjectDAO
 from webapp.dao.milestone import MilestoneDAO
+from webapp.dao.deliverable import DeliverableDAO
 
 invoicing = Blueprint('invoicing', __name__, url_prefix='/invoicing')
 
@@ -243,6 +244,27 @@ def refresh():
 		flash(str(sys.exc_info()[1]))
 
 	return redirect(url_for('invoicing.milestones'))
+
+@invoicing.route('/milestone/<milestone_id>/tuck', methods=['POST'])
+@login_required
+def milestone_tuck(milestone_id):
+
+	if 'deliverable_id' in request.form:
+
+		deliverable_id = int(request.form['deliverable_id'])
+		milestone = MilestoneDAO.get(milestone_id)
+
+		if deliverable_id < 0:
+			milestone.deliverable_id = None
+			g.db.commit()
+		elif deliverable_id > 0:	
+			for case in milestone.cases:
+				if case.deliverable_id:
+					case.deliverable_id = None		
+			milestone.deliverable_id = deliverable_id
+			g.db.commit()
+
+	return redirect(url_for('invoicing.milestone_detail', milestone_id=milestone_id))
 
 @invoicing.route('/milestone/<milestone_id>', methods=['POST'])
 @login_required

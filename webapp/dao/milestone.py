@@ -4,6 +4,10 @@ from webapp.invoicing.models import Milestone
 class MilestoneDAO:
 
 	@staticmethod
+	def get(milestone_id):
+		return g.db.query(Milestone).get(milestone_id)
+
+	@staticmethod
 	def GetInvoiceMilestones(invoice_id):
 		return g.db.query(Milestone).filter(Milestone.invoice_id==invoice_id).order_by(Milestone.ixproject, Milestone.dt)
 

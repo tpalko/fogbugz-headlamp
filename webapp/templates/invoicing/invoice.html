@@ -101,22 +101,33 @@
 		<div class="row category">
 			<div class="col-xs-8">
 				{{ category.name }}
-				<span class="help-block col-xs-offset-1">
-					{% trans count=category.cases.all()|length %}
-						case
-					{% pluralize %}
-						cases
-					{% endtrans %} {{ category.cases.all()|ticket|join(", ")|safe }}
-				</span>
-			</div>			
-			<div class="col-xs-2 text-right cost">${{ "%.2f" % category.cost() }}</div>
+				<!-- <span class="help-block col-xs-offset-1"> -->
+					({% trans count=category.cases.all()|length %}case
+					{% pluralize %}cases
+					{% endtrans %} {{ category.cases.all()|ticket|join(", ")|safe }})
+				<!-- </span> -->
+			</div>
+			
+			<div class="col-xs-2 text-right cost">
+			{% if not milestone.deliverable %}
+				${{ "%.2f" % category.cost() }}
+			{% else %}
+				-
+			{% endif %}
+			</div>
 		</div>
 	{% endfor %}
 
 	{% for case in milestone.uncategorized_cases(include_zero_cost=False) %}	
 		<div class="row case">
 			<div class="col-xs-8">{{ case.stitle }} (case {{ case.ticket_url()|safe }})</div>
-			<div class="col-xs-2 text-right cost">${{ "%.2f" % case.cost() }}</div>
+			<div class="col-xs-2 text-right cost">
+			{% if not milestone.deliverable %}
+				${{ "%.2f" % case.cost() }}
+			{% else %}
+				-
+			{% endif %}
+			</div>
 		</div>
 	{% endfor %}
 
@@ -132,7 +143,11 @@
 	{% for case in milestone.comped_cases() %}
 		<div class="row case">
 			<div class="col-xs-7 col-xs-offset-1">{{ case.stitle }} (case {{ case.ixbug }})</div>
-			<div class="col-xs-2 text-right cost">( ${{ "%.2f" % case.cost() }} )</div>
+			<div class="col-xs-2 text-right cost">
+			{% if not milestone.deliverable %}
+				( ${{ "%.2f" % case.cost() }} )
+			{% endif %}
+			</div>
 		</div>
 	{% endfor %}
 
@@ -153,10 +168,14 @@
 		</div>
 	{% endfor %}
 
-	<div class="row subtotal">
-		
+	<div class="row subtotal">		
 		<div class="col-xs-12 text-right cost">
-			${{ "%.2f" % milestone.billable_cost() }}
+			{% if not milestone.deliverable %}
+				${{ "%.2f" % milestone.billable_cost() }}
+			{% else %}
+				- see deliverable "{{ milestone.deliverable.name }}"
+				{% if not print_view and (not invoice or invoice.state == 'working') %} (${{ "%.2f" % milestone.billable_cost() }}) {% endif %}
+			{% endif %}
 		</div>
 	</div>
 

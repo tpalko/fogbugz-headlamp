@@ -18,6 +18,24 @@
 			{% include 'invoicing/_milestone_status_and_buttons.html' %}
 		</div>
 
+		<div>
+		<form method="post" action="{{ url_for('invoicing.milestone_tuck', milestone_id=milestone.id) }}">
+			{% if milestone.deliverable_id %}
+				This milestone is part of <b>{{ milestone.deliverable.name }}</b>. <input type="submit" class="btn btn-success" value="Un-tuck" />
+				<input type="hidden" name="deliverable_id" value="-1" />
+			{% else %}
+				Tuck this milestone under a deliverable:
+				<select class="alert" name="deliverable_id">
+					<option value="">Select a Deliverable</option>
+					{% for d in open_deliverables %}				
+					<option value="{{d.id}}" {% if milestone.deliverable_id == d.id %}selected{% endif %}>{{ d.name }}</option>
+					{% endfor %}
+				</select>
+				<input type="submit" class="btn btn-success" value="Tuck" />
+			{% endif %}
+		</form>
+		</div>
+
 	</div>
 	<div class="col-md-4">
 		

@@ -69,6 +69,7 @@ class Milestone(CustomBase):
 	fpaidamount = Column(Float, nullable=True)
 	cases = relationship('Case', backref='milestone', lazy='dynamic')
 	categories = relationship('Category', backref='milestone', lazy='dynamic')
+	deliverable_id = Column(Integer, ForeignKey('deliverable.id'), nullable=True)
 
 	def __init__(self, ixfixfor, sfixfor, ixproject, dt, dtstart):
 		self.ixfixfor = ixfixfor
@@ -87,9 +88,19 @@ class Milestone(CustomBase):
 		return "info" if self.bpaid else "default"
 
 	def billable_cost(self):
-
-		non_comped_non_deliverable_case_cost = sum([ c.cost() for c in self.cases if (not c.fogbugzusercases[0].bcomped and not c.deliverable) ])
-		
+		''' Sum of cost of all cases, accounting for comping and deliverable assignment .'''
+		if self.deliverable:
+			non_comped_non_deliverable_case_cost = 0
+		else:
+			non_comped_non_deliverable_case_cost = sum([ 
+				c.cost() 
+				for c 
+				in self.cases 
+				if (
+					not c.fogbugzusercases[0].bcomped 
+						and not c.deliverable) 
+			])
+			
 		return non_comped_non_deliverable_case_cost
 
 	def deliverables(self):
@@ -226,6 +237,7 @@ class Deliverable(CustomBase):
 	__tablename__ = 'deliverable'
 
 	cases = relationship('Case', backref='deliverable', lazy='dynamic')
+	milestones = relationship('Milestone', backref='deliverable', lazy='dynamic')
 	name = Column(String(255), nullable=False)
 	festimate = Column(Float, nullable=False, server_default='0.0')
 	frefunded = Column(Float, nullable=False, server_default='0.0')
@@ -276,7 +288,12 @@ class Invoice(CustomBase):
 
 	def billable_cost(self):
 
-		return sum([ m.billable_cost() for m in self.milestones.all() ]) + sum([ d.festimate for d in self.unpaid_deliverables ]) - sum([ d.frefunded for d in self.refund_deliverables ]) 
+		return sum([ m.billable_cost() for m in self.milestones.all() ]) \
+			+ sum([ d.festimate for d in self.unpaid_deliverables ]) \
+			- sum([ d.frefunded for d in self.refund_deliverables ]) 
+
+	def deliverables(self):
+		return set([ m.deliverable for m in self.milestones if m.deliverable ])
 
 class Payment(CustomBase):
 

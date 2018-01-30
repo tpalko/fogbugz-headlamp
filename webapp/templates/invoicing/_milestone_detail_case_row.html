@@ -35,9 +35,11 @@
 			<option value="">- Choose Action -</option>
 			<option value="comp">Comp</option>
 			<option value="uncomp">Uncomp</option>
-			{% for deliverable in open_deliverables %}				
-				<option value="deliverable_{{ deliverable.id }}">{% if case.deliverable_id == deliverable.id %}Remove from{% else %}Bill against{% endif %} "{{ deliverable.name }}"</option>
-			{% endfor %}
+			{% if not case.milestone.deliverable_id %}
+				{% for deliverable in open_deliverables %}				
+					<option value="deliverable_{{ deliverable.id }}">{% if case.deliverable_id == deliverable.id %}Remove from{% else %}Bill against{% endif %} "{{ deliverable.name }}"</option>
+				{% endfor %}
+			{% endif %}
 		</select>
 	</td>
 </tr>
