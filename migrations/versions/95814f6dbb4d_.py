@@ -1,4 +1,4 @@
-"""empty message
+"""2016-08-05 11:01:19.215065 create unique constraint ixBug on case
 
 Revision ID: 95814f6dbb4d
 Revises: 64cf17d03a3a

@@ -1,4 +1,4 @@
-"""empty message
+"""2016-08-05 14:53:46.416861 add sproject to project, drop sProject from project
 
 Revision ID: 09739cd28592
 Revises: 5c8ad242f237

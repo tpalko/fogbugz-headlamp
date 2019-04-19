@@ -1,4 +1,4 @@
-"""empty message
+"""2016-11-04 23:26:52.592670 add state to invoice
 
 Revision ID: b123e8aba1a1
 Revises: 526c6d50e42f

@@ -1,4 +1,4 @@
-"""empty message
+"""2016-08-03 02:16:59.231019 add is_active to auth_user, drop status from auth_user
 
 Revision ID: afa544c08c8b
 Revises: None

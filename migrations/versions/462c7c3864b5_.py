@@ -1,4 +1,4 @@
-"""empty message
+"""2016-08-20 05:49:41.848140 drop table milestone_cateogry, add milestone to category
 
 Revision ID: 462c7c3864b5
 Revises: 24cc0e0e92f6

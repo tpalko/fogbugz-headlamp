@@ -1,4 +1,4 @@
-"""empty message
+"""2016-08-22 22:52:25.259073 add sstatus to fbcase 
 
 Revision ID: 0aa1b9fd913a
 Revises: ed1d86e63c59

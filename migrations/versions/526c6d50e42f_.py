@@ -1,4 +1,4 @@
-"""empty message
+"""2016-09-19 20:29:00.730920 set invoice.customer_id not nullable, add invoice_id to milestone
 
 Revision ID: 526c6d50e42f
 Revises: 8d6c273042dd

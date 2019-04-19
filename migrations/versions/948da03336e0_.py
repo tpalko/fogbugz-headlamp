@@ -1,4 +1,4 @@
-"""empty message
+"""2016-08-24 23:30:11.967399 add fhours_override, frate_override to fogbugzusercase
 
 Revision ID: 948da03336e0
 Revises: 0aa1b9fd913a

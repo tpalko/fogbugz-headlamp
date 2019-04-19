@@ -1,4 +1,4 @@
-"""empty message
+"""2016-08-21 03:31:07.005081 add category_id to fbcase
 
 Revision ID: 445fb3758c9c
 Revises: 88dcd9df2c53

@@ -1,4 +1,4 @@
-"""empty message
+"""2016-08-03 02:22:06.150485 drop role from auth_user
 
 Revision ID: 7e9c27853468
 Revises: afa544c08c8b

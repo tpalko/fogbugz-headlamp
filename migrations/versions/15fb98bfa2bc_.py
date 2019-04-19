@@ -1,4 +1,4 @@
-"""empty message
+"""2016-08-03 02:22:23.099077 add role to auth_user
 
 Revision ID: 15fb98bfa2bc
 Revises: 7e9c27853468

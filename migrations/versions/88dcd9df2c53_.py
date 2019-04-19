@@ -1,4 +1,4 @@
-"""empty message
+"""2016-08-21 03:25:40.493581 add milestone_id to category, drop milestone from category
 
 Revision ID: 88dcd9df2c53
 Revises: 462c7c3864b5

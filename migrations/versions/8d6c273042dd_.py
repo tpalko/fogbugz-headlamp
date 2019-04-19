@@ -1,4 +1,4 @@
-"""empty message
+"""2016-08-26 04:52:38.832470 add binvoice, bpaid, festimate to deliverable, drop milestone_id from deliverable, add deliverable_id to fbcase
 
 Revision ID: 8d6c273042dd
 Revises: a191fdf88f87

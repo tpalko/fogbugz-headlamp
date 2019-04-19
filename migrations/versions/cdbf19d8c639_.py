@@ -1,4 +1,4 @@
-"""empty message
+"""2016-08-05 13:58:39.384847 drop tables fogbugzusercase, case, fogbugzuserbug, bug
 
 Revision ID: cdbf19d8c639
 Revises: 95814f6dbb4d

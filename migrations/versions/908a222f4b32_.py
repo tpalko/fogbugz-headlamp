@@ -1,4 +1,4 @@
-"""empty message
+"""2016-08-05 10:51:48.292119 drop tables project and fogbugzuser
 
 Revision ID: 908a222f4b32
 Revises: 15fb98bfa2bc

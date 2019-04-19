@@ -1,4 +1,4 @@
-"""empty message
+"""2016-08-05 14:23:55.707492 add sFullname to fogbugzuser, drop sPerson from fogbugzuser
 
 Revision ID: 6069019bd714
 Revises: d52a366882a6

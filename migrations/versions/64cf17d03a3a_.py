@@ -1,4 +1,4 @@
-"""empty message
+"""2016-08-05 11:00:23.502195 add ixPerson to fogbugzuser, ixFixFor to milestone
 
 Revision ID: 64cf17d03a3a
 Revises: f573d87520f3

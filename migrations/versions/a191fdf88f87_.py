@@ -1,4 +1,4 @@
-"""empty message
+"""2016-08-25 00:01:30.890077 add bcomped to fogbugzusercase
 
 Revision ID: a191fdf88f87
 Revises: 948da03336e0

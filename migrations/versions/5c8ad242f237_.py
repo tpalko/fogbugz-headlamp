@@ -1,4 +1,4 @@
-"""empty message
+"""2016-08-05 14:45:34.013739 change fogbugz-proper column names to lowercase
 
 Revision ID: 5c8ad242f237
 Revises: 6069019bd714

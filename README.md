@@ -14,25 +14,77 @@
 
 4. Install pip requirements:
 
-		$ sudo pip install -r requirements.txt
+		$ pip install -r requirements.txt
 
 5. Run the app
 
 		(env) $ python run.py runserver
-	
-	`run.py runserver` will emulate `heroku local` (described below) in finding `.env` and loading this into `os.environ`, importing `app` from `/webapp`, creating a `flask.ext.script.Server` and `Manager` instance, and calling `run()` on the Manager instance. This excludes `/instance/config_*.py` configuration influence.
-	
-	or 
-	
+
+	`run.py runserver` will
+		* find `.env` and load this into `os.environ`
+				HEADLMP_ENVIRONMENT
+				LOG_LEVEL
+		* import `app` from `/webapp` (loading `/config_default.py` and `/instance/config_<HEADLMP_ENVIRONMENT>.py`)
+				- defaults:
+						FOGBUGZ_{URL,ACCOUNT_NAME,PASSWORD}
+						SQLALCHEMY_DATABASE_URI
+				- overrides (informed by HEADLMP_ENVIRONMENT):
+						DB_{USER,PASSWORD,HOST,PORT,NAME}
+						SQLALCHEMY_DATABASE_{URI,ADMIN_URI} (assembled using DB_*)
+						FLASK_SERVER_LISTEN_{HOST,PORT} (for use by `run.py`)
+		* create a `flask.ext.script.Server` and `Manager` instance
+		* call `run()` on the Manager instance
+
+	or
+
 		(env) $ heroku local
-	
+
 	`heroku local` will:
-	* load `.env` and then 
-	* run `Procfile`, which 
-	* runs `wsgi.py`, which 
-	* imports `app` from `/webapp`, which 
-	* loads `config_default.py` and then 
-	* overrides that with `/instance/config_development.py` (pulling `HEADLMP_ENVIRONMENT` as `development` from `.env`).
+		* load `.env` and then
+		* run `Procfile`, which
+		* runs `wsgi.py`, which
+		* imports `app` from `/webapp`, which
+		* loads `config_default.py` and then
+		* overrides that with `/instance/config_development.py` (pulling `HEADLMP_ENVIRONMENT` as `development` from `.env`).
+
+# Shell
+
+  (env) $ python run.py shell
+
+## Load It Up
+
+from webapp import connect_db
+db = connect_db()
+from webapp.invoicing.models import *
+user = db.query(FogbugzUser).filter(FogbugzUser.sfullname=='John Wayne')
+from webapp.invoicing.fogbugz_client import FogBugzClient
+fbc = FogBugzClient()
+
+# The Database
+
+There are two sets of database credentials: 'root' level creds which are used to initially create the
+database and user role, and 'app' level creds for runtime access. Both creds live in each of
+the `/instance/config_<env>.py` configurations. The 'root' creds populate SQLALCHEMY_DATABASE_ADMIN_URI
+while the latter 'app' creds populate SQLALCHEMY_DATABASE_URI. These connection strings are then
+used per their intended function in `webapp/__init__.py`.
+
+# Running Data Load from the Command Line
+
+$ env $(cat .env | xargs) python utilities/data_pull.py
+
+# Database Migration
+
+Set the state of the application migration. This is the migration the app "thinks" its at.
+
+  (env) $ python run.py db stamp <revision>
+
+Generate a new revision based on the differences between state and any model changes.
+
+  (env) $ python run.py db migrate
+
+Apply future revisions (anything beyond state) to the actual database.
+
+  (env) $ python run.py db upgrade
 
 # Development Plan
 
@@ -59,6 +111,10 @@
 # Development Notes
 
 * This application was originally written for Fogbugz API version 7, however my account has since been upgraded to API version 8, and everything seems to work fine.
+
+# Database Dumps
+
+$ pg_dump -U headlmp -h 127.0.0.1 --clean --create --no-owner --no-acl -d headlmp > headlmp_$(date +%Y%m%d%H%M%S).dmp
 
 # References
 
