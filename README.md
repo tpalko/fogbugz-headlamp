@@ -104,7 +104,7 @@ Apply future revisions (anything beyond state) to the actual database.
 * if an invoice needs modification, it can be reverted to be a Working Invoice
 * reverting an invoice sets state from 'final' to 'working'
 * reverting an invoice does not delete the invoice, it only returns it to an editable state
-* there are two types of Working Invoice: an invoice with state == 'working' and the "default" invoice i.e. the comprehensive list of all frozen billables (milestones and deliverables) that have not been assigned to an invoice. 
+* there are two types of Working Invoice: an invoice with state == 'working' and the "default" invoice i.e. the comprehensive list of all frozen billables (milestones and deliverables) that have not been assigned to an invoice.
 * a 'working' invoice may have milestones added or removed, just like the default invoice
 * while an invoice is reverted to be a Working Invoice, the function of freezing an milestone provides the option to select to which Working Invoice it is to be applied. otherwise, a frozen milestone will automatically be assigned to the default (no invoice yet created) Working Invoice
 
@@ -118,18 +118,18 @@ $ pg_dump -U headlmp -h 127.0.0.1 --clean --create --no-owner --no-acl -d headlm
 
 # References
 
-### Fogbugz 
+### Fogbugz
 
 http://help.fogcreek.com/8202/xml-api
 
 http://help.fogcreek.com/8447/how-to-get-a-fogbugz-xml-api-token
 
-* Note: manually obtaining a token is not necessary for this application - the 'fogbugz' Python module will manage your token, given a username and password. 
+* Note: manually obtaining a token is not necessary for this application - the 'fogbugz' Python module will manage your token, given a username and password.
 
 ### Flask
 
 http://flask.pocoo.org/docs/0.10/
 
-### Jinja 
+### Jinja
 
 http://jinja.pocoo.org/
