@@ -76,7 +76,7 @@ def upgrade():
     op.create_unique_constraint(None, 'fogbugzuser', ['ixperson'])
     op.create_unique_constraint(None, 'milestone', ['ixfixfor'])
     op.create_unique_constraint(None, 'project', ['ixproject'])
-    
+
     op.create_foreign_key(None, 'fogbugzusercase', 'fogbugzuser', ['ixperson'], ['ixperson'])
     op.create_foreign_key(None, 'fogbugzusercase', 'fbcase', ['ixbug'], ['ixbug'])
     op.create_foreign_key(None, 'milestone', 'project', ['ixproject'], ['ixproject'])
