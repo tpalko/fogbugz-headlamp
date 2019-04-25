@@ -1,4 +1,4 @@
-"""empty message
+"""2017-12-26 01:37:02.277826 add deliverable_id to milestone
 
 Revision ID: d92ccc4e1540
 Revises: 9d43294b905c

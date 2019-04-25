@@ -18,11 +18,17 @@ CASE_ENDPOINT="/default.asp"
 
 user="sample"
 password="secret"
+admin="sample_admin"
+admin_password="admin_secret"
 host="127.0.0.1"
 port=5432
 database="sample_dbname"
 
 SQLALCHEMY_DATABASE_URI = 'postgresql+psycopg2://%s:%s@%s:%s/%s?client_encoding=utf8' %(user, password, host, port, database)
+SQLALCHEMY_DATABASE_ADMIN_URI = 'postgresql+psycopg2://%s:%s@%s:%s/template1?client_encoding=utf8' % (admin_user, admin_password, host, port)
+
+FLASK_SERVER_LISTEN_HOST='127.0.0.1"
+FLASK_SERVER_LISTEN_PORT=8080
 
 # Application threads. A common general assumption is
 # using 2 per available processor cores - to handle

@@ -1,4 +1,4 @@
-"""empty message
+"""2016-08-05 14:19:25.234256 add sTitle to fbcase, drop sBug from fbcase
 
 Revision ID: d52a366882a6
 Revises: 94c9eeb7d570

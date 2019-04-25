@@ -1,4 +1,4 @@
-"""empty message
+"""2016-08-21 03:55:33.237109 add scategory, sticket to fbcase
 
 Revision ID: ed1d86e63c59
 Revises: 445fb3758c9c
