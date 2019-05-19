@@ -1,0 +1,16 @@
+version: '3'
+services:
+  headlmp_app:
+    image: fogbugz_headlmp
+    build:
+      context: .
+      args:
+        - gitcommithash=9f091b67ebabb0e1175611a4f2f54f5bdbcd1dee
+    container_name: fogbugz_headlmp
+    external_links:
+      - postgresql_frankdb
+    networks:
+      - frankenbridge
+networks:
+  frankenbridge:
+    external: true
