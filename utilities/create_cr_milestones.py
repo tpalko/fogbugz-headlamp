@@ -1,8 +1,11 @@
 from fogbugz import FogBugz
 import sys
+import os
+import click
+from ConfigParser import ConfigParser
+from pytz import timezone
 
-fb = FogBugz("https://palkosoftware.fogbugz.com")
-fb.logon("tim@palkosoftware.com", "Ilmgitmn8")
+TZ = timezone('America/New_York')
 
 months = [
 	( "January", "01-01", "01-31" ),
@@ -19,8 +22,40 @@ months = [
 	( "December", "12-01", "12-31" )
 ]
 
-for m in months:
-	try:
-		fb.newFixFor(ixProject=3, sFixFor="Maintenance/CR - %s 2017" % m[0], dtRelease="2017-%sT04:00:00Z" % m[2], dtStart="2017-%sT04:00:00Z" % m[1], fAssignable="true")
-	except:
-		print sys.exc_info()[1]
+def run(fb, year, project):
+	for (month, start, end) in months:
+		try:
+			sFixFor = "Maintenance/CR - %s %s" % (month, year)
+			dtRelease_date = TZ.localize(datetime.strptime("%s-%s" % (year, start), "%Y-%m-%d"))
+			dtStart_date = TZ.localize(datetime.strptime("%s-%s" % (year, end), "%Y-%m-%d"))
+
+			dtRelease = "%s-%sT04:00:00Z" % (year, start)
+			dtStart = "%s-%sT04:00:00Z" % (year, end)
+			fb.newFixFor(
+				ixProject=project,
+				sFixFor=sFixFor,
+				dtRelease=dtRelease,
+				dtStart=dtStart,
+				fAssignable="true"
+			)
+			fixfors = fb.listFixFors(ixProject=project)
+			print fixfors
+		except:
+			print sys.exc_info()[1]
+
+@click.command()
+@click.option('--year', '-y', required=True, help='Ingest new music on disk.')
+@click.option('--project', '-p', required=True, default='3', help='Ingest new music on disk.')
+@click.option('--credentials_file', '-c', required=True, default=os.path.join(os.path.expanduser("~"), '.headlmp'), help='Path to credentials file (default ~/.headlmp)')
+def main(year, project, credentials_file):
+	config = ConfigParser()
+	config.read(credentials_file)
+	site = config.get('default', 'site')
+	username = config.get('default', 'username')
+	password = config.get('default', 'password')
+	fb = FogBugz(site)
+	fb.logon(username, password)
+	run(fb, year, project)
+
+if __name__ == '__main__':
+	main()
