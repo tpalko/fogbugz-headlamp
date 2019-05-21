@@ -27,7 +27,7 @@ database="sample_dbname"
 SQLALCHEMY_DATABASE_URI = 'postgresql+psycopg2://%s:%s@%s:%s/%s?client_encoding=utf8' %(user, password, host, port, database)
 SQLALCHEMY_DATABASE_ADMIN_URI = 'postgresql+psycopg2://%s:%s@%s:%s/template1?client_encoding=utf8' % (admin_user, admin_password, host, port)
 
-FLASK_SERVER_LISTEN_HOST='127.0.0.1"
+FLASK_SERVER_LISTEN_HOST="127.0.0.1"
 FLASK_SERVER_LISTEN_PORT=8080
 
 # Application threads. A common general assumption is
